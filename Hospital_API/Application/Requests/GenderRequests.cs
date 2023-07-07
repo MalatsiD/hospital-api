@@ -15,6 +15,17 @@ namespace Hospital_API.Application.Requests
         public GenderDto? GenderDto { get; set; }
     }
 
+    public class CheckGenderExistRequest : IRequest<ResponseModelView>
+    {
+        public int GenderId { get; set; }
+    }
+
+    public class CheckGenderNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int GenderId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleGenderRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

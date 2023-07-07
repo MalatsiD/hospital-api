@@ -1,4 +1,6 @@
-﻿using Hospital_API.ModelViews.PersonViews;
+﻿using Hospital_API.Entities;
+using Hospital_API.ModelViews.PersonViews;
+using Hospital_API.ViewModels;
 using Hospital_API.ViewModels.EmployeeViews;
 using Newtonsoft.Json;
 
@@ -20,5 +22,6 @@ namespace Hospital_API.ModelViews.EmployeeViews
 
         public virtual ICollection<ManagerView>? Managers { get; set; }
         public virtual ICollection<EmployeeAddressView>? Addresses { get; set; }
+        public virtual ICollection<DepartmentView>? Departments { get; set; }
     }
 }

@@ -26,31 +26,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkCountryExist = _countryRepository.FindBy(x => x.Id == request.ProvinceDto!.CountryId).FirstOrDefault();
-
-            if (checkCountryExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Country does not exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
-            var checkProvinceExists = _repository.FindBy(
-                    x => x.Name!.Equals(request.ProvinceDto!.Name) &&
-                    x.Id == request.ProvinceDto.CountryId
-                ).FirstOrDefault();
-
-            if(checkProvinceExists != null )
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Province already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             DateTime currentDate = DateTime.Now;
 
             Province province = new Province()
@@ -68,6 +43,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Province, ProvinceView>(province);
 
@@ -92,24 +68,13 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkCountryExist = _countryRepository.FindBy(x => x.Id == request.ProvinceDto!.CountryId).FirstOrDefault();
-
-            if (checkCountryExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Country does not exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var province = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
 
             if(province == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Province not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -121,11 +86,93 @@ namespace Hospital_API.Application.RequestHandlers
             province.DateModified = DateTime.Now;
             province.Active = request.ProvinceDto.Active;
 
-            result.Response = _repository.Update(province);
+            _repository.Update(province);
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
+            result.Response = _mapper.Map<Province, ProvinceView>(province);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckProvinceExistRequestHandler : IRequestHandler<CheckProvinceExistRequest, ResponseModelView>
+    {
+        private readonly IProvinceRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckProvinceExistRequestHandler(IProvinceRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckProvinceExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var provinceExist = _repository.FindBy(x => x.Id == request.ProvinceId).AsNoTracking().Any();
+
+            if (!provinceExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Province not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = (int)HttpStatusCode.OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = provinceExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckProvinceNameExistRequestHandler : IRequestHandler<CheckProvinceNameExistRequest, ResponseModelView>
+    {
+        private readonly IProvinceRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckProvinceNameExistRequestHandler(IProvinceRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckProvinceNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var province = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name) &&
+                x.CountryId == request.CountryId
+            );
+
+            if(request.ProvinceId > 0)
+            {
+                province = province.Where(x => x.Id != request.ProvinceId);
+            }
+
+            var exist = province.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Province already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = (int)HttpStatusCode.OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -147,18 +194,19 @@ namespace Hospital_API.Application.RequestHandlers
             var result = new ResponseModelView();
 
             var province = _repository.FindBy(x => x.Id == request.Id)
-                .Include(x => x.Country).FirstOrDefault();
+                .Include(x => x.Country).AsNoTracking().FirstOrDefault();
 
             if (province == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Province not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result); 
             }
 
             result.StatusCode = (int)HttpStatusCode.OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Province, ProvinceView>(province);
 
@@ -181,18 +229,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var provinces = _repository.GetAll().Include(x => x.Country).ToList();
+            var provinces = _repository.GetAll().Include(x => x.Country).AsNoTracking().ToList();
 
             if(!provinces.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Provinces not found";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Province>, IEnumerable<ProvinceView>>(provinces);
 

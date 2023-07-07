@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,20 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var checkVendor = CheckVendorExistExist(categoryDto.VendorId);
+
+            if(!checkVendor.Result.IsSuccessful)
+            {
+                return StatusCode(checkVendor.Result.StatusCode, checkVendor.Result);
+            }
+
+            var checkCategory = CheckPharmaceuticalCategoryNameExist(categoryDto.Name!, categoryDto.VendorId);
+
+            if(checkCategory.Result.IsSuccessful)
+            {
+                return StatusCode(checkCategory.Result.StatusCode, checkCategory.Result);
+            }
+
             var request = new AddPharmaceuticalCategoryRequest();
             request.PharmaceuticalCategoryDto = categoryDto;
             var result = await _mediator.Send(request);
@@ -38,6 +53,20 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkVendor = CheckVendorExistExist(categoryDto.VendorId);
+
+            if (!checkVendor.Result.IsSuccessful)
+            {
+                return StatusCode(checkVendor.Result.StatusCode, checkVendor.Result);
+            }
+
+            var checkCategory = CheckPharmaceuticalCategoryNameExist(categoryDto.Name!, categoryDto.VendorId, id);
+
+            if (checkCategory.Result.IsSuccessful)
+            {
+                return StatusCode(checkCategory.Result.StatusCode, checkCategory.Result);
             }
 
             var request = new UpdatePharmaceuticalCategoryRequest();
@@ -65,6 +94,28 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckVendorExistExist(int vendorId)
+        {
+            var request = new CheckVendorExistRequest();
+            request.VendorId = vendorId;
+
+            var result = await _mediator.Send(request);
+
+            return result;
+        }
+
+        private async Task<ResponseModelView> CheckPharmaceuticalCategoryNameExist(string name, int vendorId, int? categoryId = 0)
+        {
+            var request = new CheckPharmaceuticalCategoryNameExistRequest();
+            request.Name = name;
+            request.VendorId = vendorId;
+            request.CategoryId = categoryId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

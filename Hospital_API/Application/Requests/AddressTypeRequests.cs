@@ -15,6 +15,17 @@ namespace Hospital_API.Application.Requests
         public AddressTypeDto? AddressTypeDto { get; set; }
     }
 
+    public class CheckAddressTypeExistRequest : IRequest<ResponseModelView>
+    {
+        public int AddressTypeId { get; set; }
+    }
+
+    public class CheckAddressTypeNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int AddressTypeId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleAddressTypeRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

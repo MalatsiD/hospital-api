@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,13 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var check = CheckCountryExist(countryDto.Name!);
+
+            if (!check.Result.IsSuccessful)
+            {
+                return StatusCode(check.Result.StatusCode, check.Result);
+            }
+
             var request = new AddCountryRequest();
             request.CountryDto = countryDto;
             var result = await _mediator.Send(request);
@@ -38,6 +46,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var check = CheckCountryExist(countryDto.Name!, id);
+
+            if (!check.Result.IsSuccessful)
+            {
+                return StatusCode(check.Result.StatusCode, check.Result);
             }
 
             var request = new UpdateCountryRequest();
@@ -65,6 +80,17 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckCountryExist(string name, int? countryId = 0)
+        {
+            var request = new CheckCountryNameExistRequest();
+            request.Name = name;
+            request.CountryId = countryId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

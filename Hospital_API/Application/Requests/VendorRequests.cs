@@ -15,6 +15,18 @@ namespace Hospital_API.Application.Requests
         public VendorDto? VendorDto { get; set; }
     }
 
+    public class CheckVendorExistRequest : IRequest<ResponseModelView>
+    {
+        public int VendorId { get; set; }
+    }
+
+    public class CheckVendorNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int HospitalId { get; set; }
+        public int VendorId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleVendorRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

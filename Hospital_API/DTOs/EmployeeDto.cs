@@ -21,6 +21,9 @@ namespace Hospital_API.DTOs
         [JsonProperty("ManageEndDate")]
         public DateTime ManageEndDate { get; set; }
 
+        [JsonProperty("departmentId")]
+        public int DepartmentId { get; set; }
+
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
             var validator = new EmployeeDtoValidator();

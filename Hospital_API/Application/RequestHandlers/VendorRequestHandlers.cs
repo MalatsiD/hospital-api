@@ -25,31 +25,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkHospitalExist = _hospitalRepository.FindBy(x => x.Id == request.VendorDto!.HospitalId).FirstOrDefault();
-
-            if (checkHospitalExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Hospital not found!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
-            var checkVendorExist = _repository.FindBy(x => 
-                x.Name!.Equals(request.VendorDto!.Name) &&
-                x.HospitalId == request.VendorDto!.HospitalId
-            ).FirstOrDefault();
-
-            if (checkVendorExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Vendor already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             Vendor vendor = new Vendor()
@@ -69,6 +44,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Vendor, VendorView>(vendor);
 
@@ -93,24 +69,13 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkHospitalExist = _hospitalRepository.FindBy(x => x.Id == request.VendorDto!.HospitalId).FirstOrDefault();
-
-            if (checkHospitalExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Hospital not found!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var vendor = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
 
             if (vendor == null)
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
                 result.ErrorMessage = "Vendor not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -128,8 +93,89 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Vendor, VendorView>(vendor);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckVendorExistRequestHandler : IRequestHandler<CheckVendorExistRequest, ResponseModelView>
+    {
+        private readonly IVendorRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckVendorExistRequestHandler(IVendorRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckVendorExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var vendorExist = _repository.FindBy(x => x.Id == request.VendorId).AsNoTracking().Any();
+
+            if (!vendorExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Vendor not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = vendorExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckVendorNameExistRequestHandler : IRequestHandler<CheckVendorNameExistRequest, ResponseModelView>
+    {
+        private readonly IVendorRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckVendorNameExistRequestHandler(IVendorRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckVendorNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var vendor = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name) &&
+                x.HospitalId == request.HospitalId
+            );
+
+            if(request.VendorId > 0)
+            {
+                vendor = vendor.Where(x => x.Id != request.VendorId);
+            }
+
+            var exist = vendor.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Vendor already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -152,18 +198,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var vendor = _repository.FindBy(x => x.Id == request.Id)
                 .Include(x => x.Hospital)
-                .FirstOrDefault();
+                .AsNoTracking().FirstOrDefault();
 
             if (vendor == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Vendor not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Vendor, VendorView>(vendor);
 
@@ -188,18 +235,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var vendorsList = _repository.GetAll()
                 .Include(x => x.Hospital)
-                .ToList();
+                .AsNoTracking().ToList();
 
             if (!vendorsList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Vendors not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Vendor>, IEnumerable<VendorView>>(vendorsList);
 

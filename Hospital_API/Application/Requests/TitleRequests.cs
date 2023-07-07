@@ -15,6 +15,17 @@ namespace Hospital_API.Application.Requests
         public TitleDto? TitleDto { get; set; }
     }
 
+    public class CheckTitleExistRequest : IRequest<ResponseModelView>
+    {
+        public int TitleId { get; set; }
+    }
+
+    public class CheckTitleNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int TitleId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleTitleRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

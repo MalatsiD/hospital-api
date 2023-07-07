@@ -26,30 +26,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkProvinceExist = _provinceRepository.FindBy(x => x.Id == request.CityDto!.ProvinceId).FirstOrDefault();
-
-            if (checkProvinceExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Province does not exist!";
-                result.Response = false;
-                return Task.FromResult(result);
-            }
-
-            var checkCityExist = _repository.FindBy(x => 
-                x.Name!.Equals(request.CityDto!.Name) &&
-                x.ProvinceId == request.CityDto!.ProvinceId
-            ).FirstOrDefault();
-
-            if(checkCityExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "City already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             DateTime currentDate = DateTime.Now;
 
             City city = new City()
@@ -66,6 +42,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<City, CityView>(city);
 
@@ -90,24 +67,13 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkProvinceExist = _provinceRepository.FindBy(x => x.Id == request.CityDto!.ProvinceId).FirstOrDefault();
-            
-            if (checkProvinceExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Province does not exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var city = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
 
             if (city == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "City not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -118,11 +84,90 @@ namespace Hospital_API.Application.RequestHandlers
             city.ProvinceId = request.CityDto!.ProvinceId;
             city.Active = request.CityDto?.Active ?? city.Active;
 
-            result.Response = _repository.Update(city);
+            _repository.Update(city);
             _repository.Commit();
 
-            result.ErrorMessage = null;
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<City, CityView>(city);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckCityExistRequestHandler : IRequestHandler<CheckCityExistRequest, ResponseModelView>
+    {
+        private readonly ICityRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckCityExistRequestHandler(ICityRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckCityExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var cityExist = _repository.FindBy(x => x.Id == request.CityId).AsNoTracking().Any();
+
+            if (!cityExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "City not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = cityExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckCityNameExistRequestHandler : IRequestHandler<CheckCityNameExistRequest, ResponseModelView>
+    {
+        private readonly ICityRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckCityNameExistRequestHandler(ICityRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckCityNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var city = _repository.FindBy(x => x.Name!.Equals(request.Name) && x.ProvinceId == request.ProvinceId);
+
+            if(request.CityId > 0)
+            {
+                city = city.Where(x => x.Id == request.CityId);
+            }
+
+            var exist = city.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "City already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -144,18 +189,19 @@ namespace Hospital_API.Application.RequestHandlers
             var result = new ResponseModelView();
 
             var city = _repository.FindBy(x => x.Id == request.Id).Include(x => x.Province)
-                .FirstOrDefault();
+                .AsNoTracking().FirstOrDefault();
 
             if(city == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "City not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<City, CityView>(city!);
 
@@ -178,20 +224,21 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var cities = _repository.GetAll().Include(x => x.Province).ToList();
+            var cities = _repository.GetAll().Include(x => x.Province).AsNoTracking().ToList();
 
             if(!cities.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Cities not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
-            result.Response = _mapper.Map<IEnumerable<City>, IEnumerable<CityView>>(cities);
-            result.ErrorMessage = null;
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<IEnumerable<City>, IEnumerable<CityView>>(cities);
 
             return Task.FromResult(result);
         }

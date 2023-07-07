@@ -1,11 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using Hospital_API.Entities;
+using Newtonsoft.Json;
 
-namespace Hospital_API.ViewModels
+namespace Hospital_API.ViewModels.PatientViews
 {
     public class PatientAdmitView
     {
-        [JsonProperty("id")]
-        public int Id { get; set; }
+        [JsonProperty("patientAdmitId")]
+        public int PatientAdmitId { get; set; }
 
         [JsonProperty("admitDate")]
         public DateTime AdmitDate { get; set; }
@@ -39,5 +40,8 @@ namespace Hospital_API.ViewModels
 
         [JsonProperty("wardName")]
         public string? WardName { get; set; }
+
+        public virtual ICollection<AdmitAilmentView>? Ailments { get; set; }
+        public virtual ICollection<PatientTransferView>? PatientTransfers { get; set; }
     }
 }

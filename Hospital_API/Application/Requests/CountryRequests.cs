@@ -9,6 +9,17 @@ namespace Hospital_API.Application.Requests
         public CountryDto? CountryDto { get; set; }
     }
 
+    public class CheckCountryExistRequest : IRequest<ResponseModelView>
+    {
+        public int CountryId { get; set; }
+    }
+
+    public class CheckCountryNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int CountryId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class UpdateCountryRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

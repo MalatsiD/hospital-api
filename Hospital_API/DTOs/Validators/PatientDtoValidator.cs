@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Hospital_API.DTOs.Patient;
 
 namespace Hospital_API.DTOs.Validators
 {

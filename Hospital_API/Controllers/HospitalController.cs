@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkHospital = CheckHospitalExist(hospitalDto.Name!);
+
+            if(!checkHospital.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
             }
 
             var hospitalValidatorRequest = new ValidateHospitalRequest();
@@ -49,6 +57,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkHospital = CheckHospitalExist(hospitalDto.Name!, id);
+
+            if (!checkHospital.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
             }
 
             var hospitalValidatorRequest = new ValidateHospitalRequest();
@@ -87,6 +102,17 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckHospitalExist(string name, int? hospitalId = 0)
+        {
+            var request = new CheckHospitalNameExistRequest();
+            request.Name = name;
+            request.HospitalId = hospitalId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

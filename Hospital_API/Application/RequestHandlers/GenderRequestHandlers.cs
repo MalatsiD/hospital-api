@@ -4,6 +4,8 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.ViewModels;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
+using System.Runtime.InteropServices;
 
 namespace Hospital_API.Application.RequestHandlers
 {
@@ -22,17 +24,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkGenderExist = _repository.FindBy(x => x.Name!.Equals(request.GenderDto!.Name)).FirstOrDefault();
-
-            if (checkGenderExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Gender already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             var gender = new Gender()
@@ -48,6 +39,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Gender, GenderView>(gender);
 
@@ -76,7 +68,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Gender not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -86,11 +78,92 @@ namespace Hospital_API.Application.RequestHandlers
             gender.Active = request.GenderDto?.Active ?? gender.Active;
             gender.DateModified = DateTime.Now;
 
-            result.Response = _repository.Update(gender);
+            _repository.Update(gender);
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
+            result.Response = _mapper.Map<Gender, GenderView>(gender);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckGenderExistRequestHandler : IRequestHandler<CheckGenderExistRequest, ResponseModelView>
+    {
+        private readonly IGenderRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckGenderExistRequestHandler(IGenderRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckGenderExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var genderExist = _repository.FindBy(x => x.Id == request.GenderId).AsNoTracking().Any();
+
+            if (!genderExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Gender not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = genderExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckGenderNameExistRequestHandler : IRequestHandler<CheckGenderNameExistRequest, ResponseModelView>
+    {
+        private readonly IGenderRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckGenderNameExistRequestHandler(IGenderRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckGenderNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var gender = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name)
+            );
+
+            if(request.GenderId > 0)
+            {
+                gender = gender.Where(x => x.Id != request.GenderId);
+            }
+
+            var exist = gender.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Gender already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -111,18 +184,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var gender = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+            var gender = _repository.FindBy(x => x.Id == request.Id).AsNoTracking().FirstOrDefault();
 
             if (gender == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Gender not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Gender, GenderView>(gender);
 
@@ -145,18 +219,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var genderList = _repository.GetAll().ToList();
+            var genderList = _repository.GetAll().AsNoTracking().ToList();
 
             if (!genderList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Genders not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Gender>, IEnumerable<GenderView>>(genderList);
 

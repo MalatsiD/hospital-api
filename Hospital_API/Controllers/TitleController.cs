@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,13 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var checkTitle = CheckTitleNameExist(titleDto.Name!);
+
+            if(!checkTitle.Result.IsSuccessful)
+            {
+                return StatusCode(checkTitle.Result.StatusCode, checkTitle.Result);
+            }
+
             var request = new AddTitleRequest();
             request.TitleDto = titleDto;
             var result = await _mediator.Send(request);
@@ -38,6 +46,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkTitle = CheckTitleNameExist(titleDto.Name!, id);
+
+            if (!checkTitle.Result.IsSuccessful)
+            {
+                return StatusCode(checkTitle.Result.StatusCode, checkTitle.Result);
             }
 
             var request = new UpdateTitleRequest();
@@ -65,6 +80,17 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckTitleNameExist(string name, int? titleId = 0)
+        {
+            var request = new CheckTitleNameExistRequest();
+            request.Name = name;
+            request.TitleId = titleId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

@@ -92,4 +92,9 @@ namespace Hospital_API.Data.Repositories
     {
         public EmployeeRepository(MyDbContext context) : base(context) { }
     }
+
+    public class PatientAdmitRepository : EntityBaseRepository<PatientAdmit>, IPatientAdmitRepository
+    {
+        public PatientAdmitRepository(MyDbContext context) : base(context) { }
+    }
 }

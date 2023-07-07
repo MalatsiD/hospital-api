@@ -15,6 +15,18 @@ namespace Hospital_API.Application.Requests
         public PharmaceuticalDto? PharmaceuticalDto { get; set; }
     }
 
+    public class CheckPharmaceuticalExistRequest : IRequest<ResponseModelView>
+    {
+        public int PharmaceuticalId { get; set; }
+    }
+
+    public class CheckPharmaceuticalNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int CategoryId { get; set; }
+        public int PharmaceuticalId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSinglePharmaceuticalRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

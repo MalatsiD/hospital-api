@@ -9,6 +9,18 @@ namespace Hospital_API.Application.Requests
         public CityDto? CityDto { get; set; }
     }
 
+    public class CheckCityExistRequest : IRequest<ResponseModelView>
+    {
+        public int CityId { get; set; }
+    }
+
+    public class CheckCityNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int ProvinceId { get; set; }
+        public int CityId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class UpdateCityRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

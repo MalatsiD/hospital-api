@@ -2,16 +2,16 @@
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace Hospital_API.DTOs
+namespace Hospital_API.DTOs.Patient
 {
-    public class PatientDto : PersonDto, IValidatableObject
+    public class PatientPersonalInfoDto : PersonDto, IValidatableObject
     {
         [JsonProperty("patientNumber")]
-        public string? PatientNumber { get; set; } //This should be auto generated
+        public string? PatientNumber { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
         {
-            var validator = new PatientDtoValidator();
+            var validator = new PatientPersonalInfoDtoValidator();
             var result = validator.Validate(this);
 
             return result.Errors.Select(item => new ValidationResult(item.ErrorMessage, new[] {item.PropertyName}));

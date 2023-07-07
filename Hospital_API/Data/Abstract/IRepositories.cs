@@ -20,4 +20,5 @@ namespace Hospital_API.Data.Abstract
     public interface IPersonRepository : IEntityBaseRepository<Person> { }
     public interface IPatientRepository : IEntityBaseRepository<Patient> { }
     public interface IEmployeeRepository : IEntityBaseRepository<Employee> { }
+    public interface IPatientAdmitRepository : IEntityBaseRepository<PatientAdmit> { }
 }

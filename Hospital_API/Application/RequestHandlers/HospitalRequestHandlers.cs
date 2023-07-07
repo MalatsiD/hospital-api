@@ -24,17 +24,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkHospitalExist = _repository.FindBy(x => x.Name!.Equals(request.HospitalDto!.Name)).FirstOrDefault();
-
-            if (checkHospitalExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Hospital already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             Hospital hospital = new Hospital()
@@ -76,6 +65,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Hospital, HospitalView>(hospital);
 
@@ -107,7 +97,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Hospital not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -166,6 +156,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Hospital, HospitalView>(hospital);
 
@@ -196,7 +187,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "One or more cities not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -207,14 +198,95 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "One or more Address Types not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
-            result.Response = true;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckHospitalExistRequestHandler : IRequestHandler<CheckHospitalExistRequest, ResponseModelView>
+    {
+        private readonly IHospitalRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckHospitalExistRequestHandler(IHospitalRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckHospitalExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var hospitalExist = _repository.FindBy(x => x.Id == request.HospitalId).AsNoTracking().Any();
+
+
+            if (!hospitalExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Hospital not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = hospitalExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckHospitalNameExistRequestHandler : IRequestHandler<CheckHospitalNameExistRequest, ResponseModelView>
+    {
+        private readonly IHospitalRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckHospitalNameExistRequestHandler(IHospitalRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckHospitalNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var hospital = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name)
+               );
+
+            if(request.HospitalId > 0)
+            {
+                hospital = hospital.Where(x => x.Id != request.HospitalId);
+            }
+
+            var exist = hospital.AsNoTracking().Any();
+
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Hospital already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -244,19 +316,20 @@ namespace Hospital_API.Application.RequestHandlers
                 .ThenInclude(x => x.City)
                 .ThenInclude(x => x.Province)
                 .ThenInclude(x => x!.Country)
-                .FirstOrDefault();
+                .AsNoTracking().FirstOrDefault();
                 
 
             if (hospital == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Hospital not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Hospital, HospitalView>(hospital);
 
@@ -288,19 +361,20 @@ namespace Hospital_API.Application.RequestHandlers
                 .ThenInclude(x => x.City)
                 .ThenInclude(x => x.Province)
                 .ThenInclude(x => x!.Country)
-                .ToList();
+                .AsNoTracking().ToList();
 
 
             if (hospitalsList == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Hospitals not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Hospital>, IEnumerable<HospitalView>>(hospitalsList);
 

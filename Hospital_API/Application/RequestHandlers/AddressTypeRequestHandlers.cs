@@ -4,6 +4,7 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.ViewModels;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hospital_API.Application.RequestHandlers
 {
@@ -22,17 +23,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkAddressTypeExist = _repository.FindBy(x => x.Name!.Equals(request.AddressTypeDto!.Name)).FirstOrDefault();
-
-            if (checkAddressTypeExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Address Type already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             AddressType addressType = new AddressType()
@@ -48,6 +38,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<AddressType, AddressTypeView>(addressType);
 
@@ -76,7 +67,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Address Type not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -91,8 +82,86 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<AddressType, AddressTypeView>(addressType);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckAddressTypeExistRequestHandler : IRequestHandler<CheckAddressTypeExistRequest, ResponseModelView>
+    {
+        private readonly IAddressTypeRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckAddressTypeExistRequestHandler(IAddressTypeRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckAddressTypeExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var addressTypeExist = _repository.FindBy(x => x.Id == request.AddressTypeId).AsNoTracking().Any();
+
+            if (!addressTypeExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Address Type not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = addressTypeExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckAddressTypeNameExistRequestHandler : IRequestHandler<CheckAddressTypeNameExistRequest, ResponseModelView>
+    {
+        private readonly IAddressTypeRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckAddressTypeNameExistRequestHandler(IAddressTypeRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckAddressTypeNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var AddressType= _repository.FindBy(x => x.Name!.Equals(request.Name));
+
+            if(request.AddressTypeId > 0)
+            {
+                AddressType = AddressType.Where(x => x.Id != request.AddressTypeId);
+            }
+
+            var exist = AddressType.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status400BadRequest;
+                result.ErrorMessage = "Address Type already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -113,18 +182,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var addressType = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+            var addressType = _repository.FindBy(x => x.Id == request.Id).AsNoTracking().FirstOrDefault();
 
             if (addressType == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Address Type not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<AddressType, AddressTypeView>(addressType);
 
@@ -147,18 +217,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var addressTypesList = _repository.GetAll().ToList();
+            var addressTypesList = _repository.GetAll().AsNoTracking().ToList();
 
             if (!addressTypesList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Address Types not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<AddressType>, IEnumerable<AddressTypeView>>(addressTypesList);
 

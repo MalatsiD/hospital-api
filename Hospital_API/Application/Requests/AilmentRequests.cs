@@ -15,6 +15,17 @@ namespace Hospital_API.Application.Requests
         public AilmentDto? AilmentDto { get; set; }
     }
 
+    public class CheckAilmentNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int AilmentId { get; set; }
+        public string? Name { get; set; }
+    }
+
+    public class CheckAilmentExistRequest : IRequest<ResponseModelView>
+    {
+        public int AilmentId { get; set; }
+    }
+
     public class GetSingleAilmentRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

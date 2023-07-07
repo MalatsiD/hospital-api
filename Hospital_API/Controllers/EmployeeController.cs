@@ -1,5 +1,7 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.DTOs.Employee;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,52 +19,76 @@ namespace Hospital_API.Controllers
             _mediator = mediator;
         }
 
-        [HttpPost]
-        public async Task<IActionResult> AddEmployee(EmployeeDto employeeDto)
+        [HttpPost("PersonalInfo")]
+        public async Task<IActionResult> AddPersonalInfo(PersonalInfoDto personalInfoDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var validateRequest = new ValidateEmployeeRequest();
-            validateRequest.CityIdList = employeeDto.Addresses!.Select(x => x.CityId).Distinct().ToArray();
-            validateRequest.AddressTypeIdList = employeeDto.Addresses!.Select(x => x.AddressTypeId).Distinct().ToArray();
-            var validateResult = await _mediator.Send(validateRequest);
+            var checkEmial = CheckEmployeeEmailExist(personalInfoDto.Email!);
 
-            if(validateResult.StatusCode == StatusCodes.Status404NotFound)
+            if(checkEmial.Result.IsSuccessful)
             {
-                return StatusCode(validateResult.StatusCode, validateResult);
+                return StatusCode(checkEmial.Result.StatusCode, checkEmial.Result);
             }
 
-            var request = new AddEmployeeRequest();
-            request.EmployeeDto = employeeDto;
+            var validate = ValidateEmployeePersonalInfo(personalInfoDto);
+
+            if (!validate.Result.IsSuccessful)
+            {
+                return StatusCode(validate.Result.StatusCode, validate.Result);
+            }
+
+            var request = new AddEmployeePersonalInfoRequest();
+            request.PersonalInfo = personalInfoDto;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateEmployee(int id, EmployeeDto employeeDto)
+        [HttpPost("EmployementInfo/{employeeId}")]
+        public async Task<IActionResult> AddEmployementInfo(int employeeId, EmploymentInfoDto employmentInfoDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            var validateRequest = new ValidateEmployeeRequest();
-            validateRequest.CityIdList = employeeDto.Addresses!.Select(x => x.CityId).Distinct().ToArray();
-            validateRequest.AddressTypeIdList = employeeDto.Addresses!.Select(x => x.AddressTypeId).Distinct().ToArray();
-            var validateResult = await _mediator.Send(validateRequest);
+            var validate = ValidateEmploymentInfo(employmentInfoDto);
 
-            if (validateResult.StatusCode == StatusCodes.Status404NotFound)
+            if (!validate.Result.IsSuccessful)
             {
-                return StatusCode(validateResult.StatusCode, validateResult);
+                return StatusCode(validate.Result.StatusCode, validate.Result);
             }
 
-            var request = new UpdateEmployeeRequest();
-            request.Id = id;
-            request.EmployeeDto = employeeDto;
+            var request = new AddEmploymentInfoRequest();
+            request.EmployeeId = employeeId;
+            request.EmploymentInfoDto = employmentInfoDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPut("PersonalInfo/{personId}")]
+        public async Task<IActionResult> UpdatePersonalInfo(int personId, PersonalInfoDto personalInfoDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var validate = ValidateEmployeePersonalInfo(personalInfoDto);
+
+            if (!validate.Result.IsSuccessful)
+            {
+                return StatusCode(validate.Result.StatusCode, validate.Result);
+            }
+
+            var request = new UpdateEmployeePersonalInfoRequest();
+            request.PersonId = personId;
+            request.PersonalInfo = personalInfoDto;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
@@ -85,6 +111,42 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> ValidateEmployeePersonalInfo(PersonalInfoDto personalInfoDto)
+        {
+            var request = new ValidateEmployeePersonalInfoRequest();
+            request.TitleId = personalInfoDto.TitleId;
+            request.GenderId = personalInfoDto.GenderId;
+            request.AddressTypeIdList = personalInfoDto.Addresses!.Select(x => x.AddressTypeId).Distinct().ToArray();
+            request.CityIdList = personalInfoDto.Addresses!.Select(x => x.CityId).Distinct().ToArray();
+
+            var result = await _mediator.Send(request);
+
+            return result;
+        }
+
+        private async Task<ResponseModelView> ValidateEmploymentInfo(EmploymentInfoDto employmentInfoDto)
+        {
+            var request = new ValidateEmploymentInfoRequest();
+            request.ManagerId = employmentInfoDto.ManagerId;
+            request.DepartmentId = employmentInfoDto.DepartmentId;
+            request.RoleId = employmentInfoDto.RoleId;
+
+            var result = await _mediator.Send(request);
+
+            return result;
+        }
+
+        private async Task<ResponseModelView> CheckEmployeeEmailExist(string email, int? employeeId = 0)
+        {
+            var request = new CheckEmployeeEmailExistRequest();
+            request.Email = email;
+            request.EmployeeId = employeeId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

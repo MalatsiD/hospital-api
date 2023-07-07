@@ -1,4 +1,5 @@
 ﻿using FluentValidation;
+using Hospital_API.DTOs.Patient;
 
 namespace Hospital_API.DTOs.Validators
 {
@@ -6,8 +7,8 @@ namespace Hospital_API.DTOs.Validators
     {
         public PatientAdmitDtoValidator()
         {
-            RuleFor(x => x.PatientId).NotEqual(0)
-                .WithMessage("Patient cannot be empty!");
+            RuleFor(x => x.WardId).NotEqual(0)
+                .WithMessage("Ward cannot be empty!");
         }
     }
 }

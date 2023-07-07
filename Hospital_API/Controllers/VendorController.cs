@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,20 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var checkHospital = CheckHospitalExist(vendorDto.HospitalId);
+
+            if(!checkHospital.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
+            }
+
+            var checkVendor = CheckVendorNameExist(vendorDto.Name!, vendorDto.HospitalId);
+
+            if(!checkVendor.Result.IsSuccessful)
+            {
+                return StatusCode(checkVendor.Result.StatusCode, checkVendor.Result);
+            }
+
             var request = new AddVendorRequest();
             request.VendorDto = vendorDto;
             var result = await _mediator.Send(request);
@@ -38,6 +53,20 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkHospital = CheckHospitalExist(vendorDto.HospitalId);
+
+            if (!checkHospital.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
+            }
+
+            var checkVendor = CheckVendorNameExist(vendorDto.Name!, vendorDto.HospitalId, id);
+
+            if (!checkVendor.Result.IsSuccessful)
+            {
+                return StatusCode(checkVendor.Result.StatusCode, checkVendor.Result);
             }
 
             var request = new UpdateVendorRequest();
@@ -65,6 +94,28 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckHospitalExist(int hospitalId)
+        {
+            var request = new CheckHospitalExistRequest();
+            request.HospitalId = hospitalId;
+
+            var result = await _mediator.Send(request);
+
+            return result;
+        }
+
+        private async Task<ResponseModelView> CheckVendorNameExist(string name, int hospitalId, int? vendorId = 0)
+        {
+            var request = new CheckVendorNameExistRequest();
+            request.Name = name;
+            request.HospitalId = hospitalId;
+            request.VendorId = vendorId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

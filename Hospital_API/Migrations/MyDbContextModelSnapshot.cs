@@ -257,7 +257,7 @@ namespace Hospital_API.Migrations
                     b.Property<DateTime>("DateModified")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("StartDate")
@@ -311,13 +311,13 @@ namespace Hospital_API.Migrations
                     b.Property<DateTime>("DateModified")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("HireDate")
+                    b.Property<DateTime?>("HireDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("PersonId")
                         .HasColumnType("int");
 
-                    b.Property<DateTime>("TerminationDate")
+                    b.Property<DateTime?>("TerminationDate")
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
@@ -345,7 +345,7 @@ namespace Hospital_API.Migrations
                     b.Property<DateTime>("DateModified")
                         .HasColumnType("datetime2");
 
-                    b.Property<DateTime>("EndDate")
+                    b.Property<DateTime?>("EndDate")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("StartDate")
@@ -556,7 +556,7 @@ namespace Hospital_API.Migrations
                     b.Property<string>("DischargeComment")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("DischargeDate")
+                    b.Property<DateTime?>("DischargeDate")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("PatientId")
@@ -655,8 +655,8 @@ namespace Hospital_API.Migrations
                     b.Property<string>("MiddleName")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<long>("PhoneNumber")
-                        .HasColumnType("bigint");
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TitleId")
                         .HasColumnType("int");

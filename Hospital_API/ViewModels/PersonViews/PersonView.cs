@@ -25,7 +25,7 @@ namespace Hospital_API.ModelViews.PersonViews
         public string? Email { get; set; }
 
         [JsonProperty("phoneNumber")]
-        public long PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [JsonProperty("active")]
         public bool Active { get; set; }

@@ -4,6 +4,7 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.ViewModels;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hospital_API.Application.RequestHandlers
 {
@@ -22,17 +23,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkAilmentExist = _repository.FindBy(x => x.Name!.Equals(request.AilmentDto!.Name)).FirstOrDefault();
-
-            if (checkAilmentExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Ailment already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             Ailment ailment = new Ailment()
@@ -48,6 +38,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Ailment, AilmentView>(ailment);
 
@@ -76,7 +67,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Ailment not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -86,11 +77,90 @@ namespace Hospital_API.Application.RequestHandlers
             ailment.Active = request.AilmentDto?.Active ?? ailment.Active;
             ailment.DateModified = DateTime.Now;
 
-            result.Response = _repository.Update(ailment);
+            _repository.Update(ailment);
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
+            result.Response = _mapper.Map<Ailment, AilmentView>(ailment);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckAilmentExistRequestHandler : IRequestHandler<CheckAilmentExistRequest, ResponseModelView>
+    {
+        private readonly IAilmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckAilmentExistRequestHandler(IAilmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckAilmentExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var ailmentExist = _repository.FindBy(x => x.Id == request.AilmentId).AsNoTracking().Any();
+
+            if (!ailmentExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ailment not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = ailmentExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckAilmentNameExistRequestHandler : IRequestHandler<CheckAilmentNameExistRequest, ResponseModelView>
+    {
+        private readonly IAilmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckAilmentNameExistRequestHandler(IAilmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckAilmentNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var ailment = _repository.FindBy(x => x.Name!.Equals(request.Name));
+
+            if (request.AilmentId > 0)
+            {
+                ailment = ailment.Where(x => x.Id != request.AilmentId);
+            }
+
+            var exist = ailment.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ailment already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -111,18 +181,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var ailment = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+            var ailment = _repository.FindBy(x => x.Id == request.Id).AsNoTracking().FirstOrDefault();
 
             if (ailment == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Ailment not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Ailment, AilmentView>(ailment);
 
@@ -145,18 +216,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var ailmentsList = _repository.GetAll().ToList();
+            var ailmentsList = _repository.GetAll().AsNoTracking().ToList();
 
             if (!ailmentsList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Ailments not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Ailment>, IEnumerable<AilmentView>>(ailmentsList);
 

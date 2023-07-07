@@ -15,6 +15,17 @@ namespace Hospital_API.Application.Requests
         public RoleDto? RoleDto { get; set; }
     }
 
+    public class CheckRoleExistRequest : IRequest<ResponseModelView>
+    {
+        public int RoleId { get; set; }
+    }
+
+    public class CheckRoleNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int RoleId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleRoleRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

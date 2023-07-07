@@ -1,24 +1,51 @@
-﻿using Hospital_API.DTOs;
+﻿using Hospital_API.DTOs.Patient;
 using Hospital_API.ViewModels;
 using MediatR;
 
 namespace Hospital_API.Application.Requests
 {
-    public class AddPatientRequest : IRequest<ResponseModelView>
+    public class AddPatientPersonalInfoRequest : IRequest<ResponseModelView>
     {
-        public PatientDto? PatientDto { get; set; }
+        public PatientPersonalInfoDto? PatientPersonalInfo { get; set; }
     }
 
-    public class UpdatePatientRequest : IRequest<ResponseModelView>
+    public class UpdatePatientPersonalInfoRequest : IRequest<ResponseModelView>
     {
-        public int Id { get; set; }
-        public PatientDto? PatientDto { get; set; }
+        public int PersonId { get; set; }
+        public PatientPersonalInfoDto? PatientPersonalInfo { get; set; }
     }
 
-    public class ValidatePatientRequest : IRequest<ResponseModelView>
+    public class AddPatientAdmitRequest : IRequest<ResponseModelView>
     {
+        public int PatientId { get; set; }
+        public PatientAdmitDto? PatientAdmitDto { get; set; }
+    }
+
+    public class AddPatientTransferRequest : IRequest<ResponseModelView>
+    {
+        public int PatientAdmitId { get; set; }
+        public PatientTranferDto? PatientTranferDto { get; set; }
+    }
+
+    public class UpdatePatientAdmitRequest : IRequest<ResponseModelView>
+    {
+        public int PatientId { get; set; }
+        public int PatientAdmitId { get; set; }
+        public PatientAdmitDto? PatientAdmitDto { get; set; }
+    }
+
+    public class ValidatePatientPersonalInfoRequest : IRequest<ResponseModelView>
+    {
+        public int TitleId { get; set; }
+        public int GenderId { get; set; }
+
         public int[]? CityIdList { get; set; }
         public int[]? AddressTypeIdList { get; set; }
+    }
+
+    public class CheckPatientExistRequest : IRequest<ResponseModelView>
+    {
+        public int PatientId { get; set; }
     }
 
     public class GetSinglePatientRequest : IRequest<ResponseModelView>

@@ -22,7 +22,7 @@ namespace Hospital_API.DTOs
         public string? Email { get; set; }
 
         [JsonProperty("phoneNumber")]
-        public long PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [JsonProperty("active")]
         public bool Active { get; set; } = true;

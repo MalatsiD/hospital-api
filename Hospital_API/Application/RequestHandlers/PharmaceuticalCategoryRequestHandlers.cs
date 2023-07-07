@@ -30,19 +30,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkVendorExist = _vendorRepository.FindBy(x => x.Id ==
-                request.PharmaceuticalCategoryDto!.VendorId
-            ).FirstOrDefault();
-
-            if ( checkVendorExist == null )
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Vendor not found!";
-                result.Response = false;
-
-                return Task.FromResult( result );
-            }
-
             var checkPharmaceuticalCatExist = _repository.FindBy(x => 
                 x.Name!.Equals(request.PharmaceuticalCategoryDto!.Name) &&
                 x.VendorId == request.PharmaceuticalCategoryDto.VendorId
@@ -52,7 +39,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
                 result.ErrorMessage = "Pharmaceutical Category already exist!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -73,6 +60,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<PharmaceuticalCategory, PharmaceuticalCategoryView>(category);
 
@@ -110,7 +98,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
                 result.ErrorMessage = "Vendor not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -123,7 +111,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Pharmaceutical Category not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -138,8 +126,97 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<PharmaceuticalCategory, PharmaceuticalCategoryView>(category);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckPharmaceuticalCategoryExistRequestHandler :
+        IRequestHandler<CheckPharmaceuticalCategoryExistRequest, ResponseModelView>
+    {
+        private readonly IPharmaceuticalCategoryRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckPharmaceuticalCategoryExistRequestHandler(
+            IPharmaceuticalCategoryRepository repository,
+            IMapper mapper
+            )
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckPharmaceuticalCategoryExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var categoryExist = _repository.FindBy(x => x.Id == request.CategoryId).AsNoTracking().Any();
+
+            if (!categoryExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Pharmaceutical Category not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = categoryExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckPharmaceuticalCategoryNameExistRequestHandler :
+        IRequestHandler<CheckPharmaceuticalCategoryNameExistRequest, ResponseModelView>
+    {
+        private readonly IPharmaceuticalCategoryRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckPharmaceuticalCategoryNameExistRequestHandler(
+            IPharmaceuticalCategoryRepository repository,
+            IMapper mapper
+            )
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckPharmaceuticalCategoryNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var category = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name) &&
+                x.VendorId == request.VendorId
+            );
+
+            if(request.CategoryId > 0)
+            {
+                category = category.Where(x => x.Id != request.CategoryId);
+            }
+
+            var exist = category.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Pharmaceutical Category already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -166,18 +243,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var category = _repository.FindBy(x => x.Id == request.Id)
                 .Include(x => x.Vendor)
-                .FirstOrDefault();
+                .AsNoTracking().FirstOrDefault();
 
             if (category == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Pharmaceutical Category not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<PharmaceuticalCategory, PharmaceuticalCategoryView>(category);
 
@@ -206,18 +284,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var categoriesList = _repository.GetAll()
                 .Include(x => x.Vendor)
-                .ToList();
+                .AsNoTracking().ToList();
 
             if (!categoriesList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Pharmaceutical Categories not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<PharmaceuticalCategory>, IEnumerable<PharmaceuticalCategoryView>>(categoriesList);
 

@@ -15,6 +15,18 @@ namespace Hospital_API.Application.Requests
         public DepartmentDto? DepartmentDto { get; set; }
     }
 
+    public class CheckDepartmentExistRequest : IRequest<ResponseModelView>
+    {
+        public int DepartmentId { get; set; }
+    }
+
+    public class CheckDepartmentNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int HospitalId { get; set; }
+        public int DepartmentId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleDepartmentRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

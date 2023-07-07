@@ -15,6 +15,18 @@ namespace Hospital_API.Application.Requests
         public WardDto? WardDto { get; set; }
     }
 
+    public class CheckWardExistRequest : IRequest<ResponseModelView>
+    {
+        public int WardId { get; set; }
+    }
+
+    public class CheckWardNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int DepartmentId { get; set; }
+        public int WardId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleWardRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

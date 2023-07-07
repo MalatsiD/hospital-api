@@ -21,6 +21,17 @@ namespace Hospital_API.Application.Requests
         public int[]? AddressTypeIdList { get; set; }
     }
 
+    public class CheckHospitalExistRequest : IRequest<ResponseModelView>
+    {
+        public int HospitalId { get; set; }
+    }
+
+    public class CheckHospitalNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int HospitalId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleHospitalRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,20 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var checkHospital = CheckHospitalExist(departmentDto.HospitalId);
+
+            if(!checkHospital.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
+            }
+
+            var checkDepartment = CheckDepartmentExist(departmentDto.Name!, departmentDto.HospitalId);
+
+            if (!checkDepartment.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
+            }
+
             var request = new AddDepartmentRequest();
             request.DepartmentDto = departmentDto;
             var result = await _mediator.Send(request);
@@ -38,6 +53,20 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkHospital = CheckHospitalExist(departmentDto.HospitalId);
+
+            if (!checkHospital.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
+            }
+
+            var checkDepartment = CheckDepartmentExist(departmentDto.Name!, departmentDto.HospitalId, id);
+
+            if (!checkDepartment.Result.IsSuccessful)
+            {
+                return StatusCode(checkHospital.Result.StatusCode, checkHospital.Result);
             }
 
             var request = new UpdateDepartmentRequest();
@@ -65,6 +94,28 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckDepartmentExist(string name, int hospitalId, int? departmentId = 0)
+        {
+            var request = new CheckDepartmentNameExistRequest();
+            request.Name = name;
+            request.HospitalId = hospitalId;
+            request.DepartmentId = departmentId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
+        }
+
+        private async Task<ResponseModelView> CheckHospitalExist(int hospitalId)
+        {
+            var request = new CheckHospitalExistRequest();
+            request.HospitalId = hospitalId;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

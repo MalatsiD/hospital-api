@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,13 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var check = CheckAilmentExist(ailmentDto.Name!);
+
+            if(!check.Result.IsSuccessful)
+            {
+                return StatusCode(check.Result.StatusCode, check.Result);
+            }
+
             var request = new AddAilmentRequest();
             request.AilmentDto = ailmentDto;
             var result = await _mediator.Send(request);
@@ -38,6 +46,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var check = CheckAilmentExist(ailmentDto.Name!, id);
+
+            if (!check.Result.IsSuccessful)
+            {
+                return StatusCode(check.Result.StatusCode, check.Result);
             }
 
             var request = new UpdateAilmentRequest();
@@ -65,6 +80,17 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckAilmentExist(string name, int? ailmentId = 0)
+        {
+            var requet = new CheckAilmentNameExistRequest();
+            requet.Name = name;
+            requet.AilmentId = ailmentId ?? 0;
+
+            var result = await _mediator.Send(requet);
+
+            return result;
         }
     }
 }

@@ -4,6 +4,7 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.ViewModels;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hospital_API.Application.RequestHandlers
 {
@@ -22,17 +23,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkRoleExist = _repository.FindBy(x => x.Name!.Equals(request.RoleDto!.Name)).FirstOrDefault();
-
-            if (checkRoleExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Role already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             Role role = new Role()
@@ -48,6 +38,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Role, RoleView>(role);
 
@@ -76,7 +67,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Role not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -90,8 +81,88 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Role, RoleView>(role);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckRoleExistRequestHandler : IRequestHandler<CheckRoleExistRequest, ResponseModelView>
+    {
+        private readonly IRoleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckRoleExistRequestHandler(IRoleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckRoleExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var roleExist = _repository.FindBy(x => x.Id == request.RoleId).AsNoTracking().Any();
+
+            if (!roleExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Role not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = roleExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckRoleNameExistRequestHandler : IRequestHandler<CheckRoleNameExistRequest, ResponseModelView>
+    {
+        private readonly IRoleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckRoleNameExistRequestHandler(IRoleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckRoleNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var role = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name)
+            );
+
+            if(request.RoleId > 0)
+            {
+                role = role.Where(x => x.Id != request.RoleId);
+            }
+
+            var exist = role.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Role already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -112,18 +183,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var role = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+            var role = _repository.FindBy(x => x.Id == request.Id).AsNoTracking().FirstOrDefault();
 
             if (role == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Role not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Role, RoleView>(role);
 
@@ -146,18 +218,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var rolesList = _repository.GetAll().ToList();
+            var rolesList = _repository.GetAll().AsNoTracking().ToList();
 
             if (!rolesList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Roles not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Role>, IEnumerable<RoleView>>(rolesList);
 

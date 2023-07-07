@@ -1,24 +1,53 @@
 ﻿using Hospital_API.DTOs;
+using Hospital_API.DTOs.Employee;
 using Hospital_API.ViewModels;
 using MediatR;
 
 namespace Hospital_API.Application.Requests
 {
-    public class AddEmployeeRequest : IRequest<ResponseModelView>
+    public class AddEmployeePersonalInfoRequest : IRequest<ResponseModelView>
     {
-        public EmployeeDto? EmployeeDto { get; set; }
+        public PersonalInfoDto? PersonalInfo { get; set; }
     }
 
-    public class UpdateEmployeeRequest : IRequest<ResponseModelView>
+    public class UpdateEmployeePersonalInfoRequest : IRequest<ResponseModelView>
     {
-        public int Id { get; set; }
-        public EmployeeDto? EmployeeDto { get; set; }
+        public int PersonId { get; set; }
+        public PersonalInfoDto? PersonalInfo { get; set; }
     }
 
-    public class ValidateEmployeeRequest : IRequest<ResponseModelView>
+    public class AddEmploymentInfoRequest : IRequest<ResponseModelView>
     {
+        public int EmployeeId { get; set; }
+        public EmploymentInfoDto? EmploymentInfoDto { get; set; }
+    }
+
+    public class ValidateEmployeePersonalInfoRequest : IRequest<ResponseModelView>
+    {
+        public int TitleId { get; set; }
+        public int GenderId { get; set; }
+
         public int[]? CityIdList { get; set; }
         public int[]? AddressTypeIdList { get; set; }
+    }
+
+    public class ValidateEmploymentInfoRequest : IRequest<ResponseModelView>
+    {
+        public int DepartmentId { get; set; }
+        public int ManagerId { get; set; }
+
+        public int RoleId { get; set; }
+    }
+
+    public class CheckEmployeeExistRequest : IRequest<ResponseModelView>
+    {
+        public int EmployeeId { get; set; }
+    }
+
+    public class CheckEmployeeEmailExistRequest : IRequest<ResponseModelView>
+    {
+        public int EmployeeId { get; set; }
+        public string? Email { get; set; }
     }
 
     public class GetSingleEmployeeRequest : IRequest<ResponseModelView>

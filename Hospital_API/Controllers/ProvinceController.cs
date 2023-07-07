@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,20 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var checkCountry = CheckCountryExist(provinceDto.CountryId);
+
+            if(!checkCountry.Result.IsSuccessful)
+            {
+                return StatusCode(checkCountry.Result.StatusCode, checkCountry.Result);
+            }
+
+            var checkProvince = CheckProvinceNameExist(provinceDto.Name!, provinceDto.CountryId);
+
+            if(!checkProvince.Result.IsSuccessful)
+            {
+                return StatusCode(checkProvince.Result.StatusCode, checkProvince.Result);
+            }
+
             var request = new AddProvinceRequest();
             request.ProvinceDto = provinceDto;
             var result = await _mediator.Send(request);
@@ -38,6 +53,20 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkCountry = CheckCountryExist(provinceDto.CountryId);
+
+            if (!checkCountry.Result.IsSuccessful)
+            {
+                return StatusCode(checkCountry.Result.StatusCode, checkCountry.Result);
+            }
+
+            var checkProvince = CheckProvinceNameExist(provinceDto.Name!, provinceDto.CountryId, id);
+
+            if (!checkProvince.Result.IsSuccessful)
+            {
+                return StatusCode(checkProvince.Result.StatusCode, checkProvince.Result);
             }
 
             var request = new UpdateProvinceRequest();
@@ -65,6 +94,28 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckCountryExist(int countryId)
+        {
+            var request = new CheckCountryExistRequest();
+            request.CountryId = countryId;
+
+            var result = await _mediator.Send(request);
+
+            return result;
+        }
+
+        private async Task<ResponseModelView> CheckProvinceNameExist(string name, int countryId, int? provinceId = 0)
+        {
+            var request = new CheckProvinceNameExistRequest();
+            request.Name = name;
+            request.CountryId = countryId;
+            request.ProvinceId = provinceId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

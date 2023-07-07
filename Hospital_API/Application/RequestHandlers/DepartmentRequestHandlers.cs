@@ -26,27 +26,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkHospitalExist = _hospitalRepository.FindBy(x => x.Id == request.DepartmentDto!.HospitalId).FirstOrDefault();
-
-            if (checkHospitalExist == null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Hospital not found!";
-                return Task.FromResult(result);
-            }
-
-            var checkDepartmentExist = _repository.FindBy(x => 
-                x.Name!.Equals(request.DepartmentDto!.Name) &&
-                x.HospitalId == request.DepartmentDto.HospitalId
-            ).FirstOrDefault();
-
-            if (checkDepartmentExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Department already exist!";
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             Department department = new Department()
@@ -64,6 +43,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Department, DepartmentView>(department);
 
@@ -93,7 +73,9 @@ namespace Hospital_API.Application.RequestHandlers
             if (checkHospitalExist == null)
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
+                result.IsSuccessful = false;
                 result.ErrorMessage = "Hospital not found!";
+
                 return Task.FromResult(result);
             }
 
@@ -102,7 +84,9 @@ namespace Hospital_API.Application.RequestHandlers
             if (department == null)
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
+                result.IsSuccessful = false;
                 result.ErrorMessage = "Department not found!";
+
                 return Task.FromResult(result);
             }
 
@@ -117,8 +101,89 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Department, DepartmentView>(department);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckDepartmentExistRequestHandler : IRequestHandler<CheckDepartmentExistRequest, ResponseModelView>
+    {
+        private readonly IDepartmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckDepartmentExistRequestHandler(IDepartmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckDepartmentExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var departmentExist = _repository.FindBy(x => x.Id == request.DepartmentId).AsNoTracking().Any();
+
+            if (!departmentExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.IsSuccessful = false;
+                result.ErrorMessage = "Department not found!";
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = departmentExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckDepartmentNameExistRequestHandler : IRequestHandler<CheckDepartmentNameExistRequest, ResponseModelView>
+    {
+        private readonly IDepartmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckDepartmentNameExistRequestHandler(IDepartmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckDepartmentNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var department = _repository.FindBy(x => 
+                    x.Name!.Equals(request.Name) &&
+                    x.HospitalId == request.HospitalId
+                );
+
+            if(request.DepartmentId > 0)
+            {
+                department = department.Where(x => x.Id != request.DepartmentId);
+            }
+
+            var exist = department.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status400BadRequest;
+                result.IsSuccessful = false;
+                result.ErrorMessage = "Department already exist!";
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -141,16 +206,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var department = _repository.FindBy(x => x.Id == request.Id)
                 .Include(x => x.Hospital)
-                .FirstOrDefault();
+                .AsNoTracking().FirstOrDefault();
 
             if (department == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
+                result.IsSuccessful = false;
                 result.ErrorMessage = "Department not found!";
+
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Department, DepartmentView>(department);
 
@@ -175,16 +243,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var departmentsList = _repository.GetAll()
                 .Include(x => x.Hospital)
-                .ToList();
+                .AsNoTracking().ToList();
 
             if (!departmentsList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
+                result.IsSuccessful = false;
                 result.ErrorMessage = "Departments not found!";
+
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Department>, IEnumerable<DepartmentView>>(departmentsList);
 

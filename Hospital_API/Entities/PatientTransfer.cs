@@ -10,12 +10,12 @@
         public bool Active { get; set; }
 
         public int PatientAdmitId { get; set; }
-        public PatientAdmit PatientAdmit { get; set; }
+        public PatientAdmit? PatientAdmit { get; set; }
 
         public int? HospitalId { get; set; } //Destination Hospital
-        public Hospital Hospital { get; set; }
+        public Hospital? Hospital { get; set; }
 
         public int? WardId { get; set; }
-        public Ward Ward { get; set; }
+        public Ward? Ward { get; set; }
     }
 }

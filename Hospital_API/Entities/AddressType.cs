@@ -9,6 +9,6 @@
         public DateTime DateCreated { get; set; }
         public bool Active { get; set; }
 
-        public ICollection<Address> Addresses { get; set; }
+        public virtual ICollection<Address>? Addresses { get; set; }
     }
 }

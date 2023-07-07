@@ -15,6 +15,18 @@ namespace Hospital_API.Application.Requests
         public ProvinceDto? ProvinceDto { get; set; }
     }
 
+    public class CheckProvinceExistRequest : IRequest<ResponseModelView>
+    {
+        public int ProvinceId { get; set; }
+    }
+
+    public class CheckProvinceNameExistRequest : IRequest<ResponseModelView>
+    {
+        public int CountryId { get; set; }
+        public int ProvinceId { get; set; }
+        public string? Name { get; set; }
+    }
+
     public class GetSingleProvinceRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

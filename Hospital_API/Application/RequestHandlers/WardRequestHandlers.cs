@@ -31,7 +31,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
                 result.ErrorMessage = "Department not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -45,7 +45,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
                 result.ErrorMessage = "Ward already exist!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -66,6 +66,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Ward, WardView>(ward);
 
@@ -96,7 +97,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status400BadRequest;
                 result.ErrorMessage = "Department not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -107,7 +108,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Ward not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -123,8 +124,89 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Ward, WardView>(ward);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckWardExistRequestHandler : IRequestHandler<CheckWardExistRequest, ResponseModelView>
+    {
+        private readonly IWardRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckWardExistRequestHandler(IWardRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckWardExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var wardExist = _repository.FindBy(x => x.Id == request.WardId).AsNoTracking().Any();
+
+            if (!wardExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ward not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = wardExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckWardNameExistRequestHandler : IRequestHandler<CheckWardNameExistRequest, ResponseModelView>
+    {
+        private readonly IWardRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckWardNameExistRequestHandler(IWardRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckWardNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var ward = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name) &&
+                x.DepartmentId == request.DepartmentId
+            );
+
+            if(request.WardId > 0)
+            {
+                ward = ward.Where(x => x.Id != request.WardId);
+            }
+
+            var exist = ward.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ward already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -147,18 +229,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var ward = _repository.FindBy(x => x.Id == request.Id)
                  .Include(x => x.Department)
-                .FirstOrDefault();
+                 .AsNoTracking().FirstOrDefault();
 
             if (ward == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Ward not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Ward, WardView>(ward);
 
@@ -183,18 +266,19 @@ namespace Hospital_API.Application.RequestHandlers
 
             var wardsList = _repository.GetAll()
                 .Include(x => x.Department)
-                .ToList();
+                .AsNoTracking().ToList();
 
             if (!wardsList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Wards not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Ward>, IEnumerable<WardView>>(wardsList);
 

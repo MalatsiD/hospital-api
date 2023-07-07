@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,13 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var checkRole = CheckRoleNameExist(roleDto.Name!);
+
+            if(!checkRole.Result.IsSuccessful)
+            {
+                return StatusCode(checkRole.Result.StatusCode, checkRole.Result);
+            }
+
             var request = new AddRoleRequest();
             request.RoleDto = roleDto;
             var result = await _mediator.Send(request);
@@ -38,6 +46,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var checkRole = CheckRoleNameExist(roleDto.Name!, id);
+
+            if (!checkRole.Result.IsSuccessful)
+            {
+                return StatusCode(checkRole.Result.StatusCode, checkRole.Result);
             }
 
             var request = new UpdateRoleRequest();
@@ -65,6 +80,17 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckRoleNameExist(string name, int? roleId = 0)
+        {
+            var request = new CheckRoleNameExistRequest();
+            request.Name = name;
+            request.RoleId = roleId ?? 0;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

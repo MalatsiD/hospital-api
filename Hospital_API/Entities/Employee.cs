@@ -3,8 +3,8 @@
     public class Employee
     {
         public int Id { get; set; }
-        public DateTime HireDate { get; set; }
-        public DateTime TerminationDate { get; set; }
+        public DateTime? HireDate { get; set; }
+        public DateTime? TerminationDate { get; set; }
         public DateTime DateModified { get; set; }
         public DateTime DateCreated { get; set; }
         public bool Active { get; set; }

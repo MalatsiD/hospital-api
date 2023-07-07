@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,13 @@ namespace Hospital_API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var check = CheckAddressTypeNameExist(addressTypeDto.Name!);
+
+            if (!check.Result.IsSuccessful)
+            {
+                return StatusCode(check.Result.StatusCode, check.Result);
+            }
+
             var request = new AddAddressTypeRequest();
             request.AddressTypeDto = addressTypeDto;
             var result = await _mediator.Send(request);
@@ -38,6 +46,13 @@ namespace Hospital_API.Controllers
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
+            }
+
+            var check = CheckAddressTypeNameExist(addressTypeDto.Name!, id);
+
+            if (!check.Result.IsSuccessful)
+            {
+                return StatusCode(check.Result.StatusCode, check.Result);
             }
 
             var request = new UpdateAddressTypeRequest();
@@ -65,6 +80,17 @@ namespace Hospital_API.Controllers
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
+        }
+
+        private async Task<ResponseModelView> CheckAddressTypeNameExist(string name, int? addressTypeId = 0)
+        {
+            var request = new CheckAddressTypeNameExistRequest();
+            request.AddressTypeId = addressTypeId ?? 0;
+            request.Name = name;
+
+            var result = await _mediator.Send(request);
+
+            return result;
         }
     }
 }

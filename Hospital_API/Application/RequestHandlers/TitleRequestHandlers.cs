@@ -4,6 +4,7 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.ViewModels;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Hospital_API.Application.RequestHandlers
 {
@@ -22,17 +23,6 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var checkTitleExist = _repository.FindBy(x => x.Name!.Equals(request.TitleDto!.Name)).FirstOrDefault();
-
-            if (checkTitleExist != null)
-            {
-                result.StatusCode = StatusCodes.Status400BadRequest;
-                result.ErrorMessage = "Title already exist!";
-                result.Response = false;
-
-                return Task.FromResult(result);
-            }
-
             var currentDate = DateTime.Now;
 
             var title = new Title()
@@ -48,6 +38,7 @@ namespace Hospital_API.Application.RequestHandlers
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status201Created;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Title, TitleView>(title);
 
@@ -76,7 +67,7 @@ namespace Hospital_API.Application.RequestHandlers
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Title not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
@@ -86,11 +77,92 @@ namespace Hospital_API.Application.RequestHandlers
             title.Active = request.TitleDto?.Active ?? title.Active;
             title.DateModified = DateTime.Now;
 
-            result.Response = _repository.Update(title);
+            _repository.Update(title);
             _repository.Commit();
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
+            result.Response = _mapper.Map<Title, TitleView>(title);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckTitleExistRequestHandler : IRequestHandler<CheckTitleExistRequest, ResponseModelView>
+    {
+        private readonly ITitleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckTitleExistRequestHandler(ITitleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckTitleExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var titleExist = _repository.FindBy(x => x.Id == request.TitleId).AsNoTracking().Any();
+
+            if (!titleExist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Title not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = titleExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class CheckTitleNameExistRequestHandler : IRequestHandler<CheckTitleNameExistRequest, ResponseModelView>
+    {
+        private readonly ITitleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckTitleNameExistRequestHandler(ITitleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckTitleNameExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var title = _repository.FindBy(x => 
+                x.Name!.Equals(request.Name)
+            );
+
+            if(request.TitleId > 0)
+            {
+                title = title.Where(x => x.Id != request.TitleId);
+            }
+
+            var exist = title.AsNoTracking().Any();
+
+            if (exist)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Title already exist!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = exist;
 
             return Task.FromResult(result);
         }
@@ -111,18 +183,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var title = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+            var title = _repository.FindBy(x => x.Id == request.Id).AsNoTracking().FirstOrDefault();
 
             if (title == null)
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Title not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Title, TitleView>(title);
 
@@ -145,18 +218,19 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var titlesList = _repository.GetAll().ToList();
+            var titlesList = _repository.GetAll().AsNoTracking().ToList();
 
             if (!titlesList.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Titles not found!";
-                result.Response = false;
+                result.IsSuccessful = false;
 
                 return Task.FromResult(result);
             }
 
             result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<IEnumerable<Title>, IEnumerable<TitleView>>(titlesList);
 

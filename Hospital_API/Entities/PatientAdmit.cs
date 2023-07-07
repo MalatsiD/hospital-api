@@ -5,7 +5,7 @@
         public int Id { get; set; }
         public DateTime AdmitDate { get; set; }
         public string? AdmitComment { get; set; }
-        public DateTime DischargeDate { get; set; }
+        public DateTime? DischargeDate { get; set; }
         public string? DischargeComment { get; set; }
         public string? Prescription { get; set; }
         public DateTime DateModified { get; set; }
@@ -17,7 +17,7 @@
         public int WardId { get; set; }
         public Ward? Ward { get; set; }
 
-        public ICollection<AdmitAilment>? Ailments { get; set; }
-        public ICollection<PatientTranfer>? PatientTranfers { get; set; }
+        public virtual ICollection<AdmitAilment>? Ailments { get; set; }
+        public virtual ICollection<PatientTranfer>? PatientTranfers { get; set; }
     }
 }
