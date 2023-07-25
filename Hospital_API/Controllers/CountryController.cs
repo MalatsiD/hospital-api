@@ -1,9 +1,11 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
 
 namespace Hospital_API.Controllers
 {
@@ -63,6 +65,42 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeCountryStatus/{id}")]
+        public async Task<IActionResult> UpdateCountryStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var request = new UpdateCountryStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCountry(int id)
+        {
+
+            var checkCountryInProvinceRequest = new CheckCountryInProvinceExistRequest();
+            checkCountryInProvinceRequest.CountryId = id;
+            var checkCountryResult = await _mediator.Send(checkCountryInProvinceRequest);
+
+            if (!checkCountryResult.IsSuccessful)
+            {
+                return StatusCode(checkCountryResult.StatusCode, checkCountryResult);
+            }
+
+            var request = new DeleteCountryRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleCountry(int id)
         {
@@ -74,9 +112,10 @@ namespace Hospital_API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCountries()
+        public async Task<IActionResult> GetAllCountries([FromQuery] CountryFilterDto countryFilterDto)
         {
             var request = new GetAllCountryRequest();
+            request.CountryFilterDto = countryFilterDto;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

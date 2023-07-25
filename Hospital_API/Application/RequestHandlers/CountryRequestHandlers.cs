@@ -2,6 +2,7 @@
 using Hospital_API.Application.Requests;
 using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
+using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -87,6 +88,85 @@ namespace Hospital_API.Application.RequestHandlers
             result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Country, CountryView>(country);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class UpdateCountryStatusRequestHandler : IRequestHandler<UpdateCountryStatusRequest, ResponseModelView>
+    {
+        private readonly ICountryRepository _repository;
+        private readonly IMapper _mapper;
+
+        public UpdateCountryStatusRequestHandler(ICountryRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(UpdateCountryStatusRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var country = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (country == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Country not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            country.DateModified = DateTime.Now;
+            country.Active = request.StatusChangeDto?.Active ?? country.Active;
+
+            _repository.Update(country);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<Country, CountryView>(country);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class DeleteCountryRequestHandler : IRequestHandler<DeleteCountryRequest, ResponseModelView>
+    {
+        private readonly ICountryRepository _repository;
+        private readonly IMapper _mapper;
+
+        public DeleteCountryRequestHandler(ICountryRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(DeleteCountryRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var country = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (country == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Country not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            var res = _repository.Delete(country);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = res;
 
             return Task.FromResult(result);
         }
@@ -204,7 +284,7 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
-    public class GetAllCountryRequestHandler : IRequestHandler<GetAllCountryRequest, ResponseModelView>
+    public class GetAllCountryRequestHandler : IRequestHandler<GetAllCountryRequest, ResponsePaginationModelView>
     {
         private readonly ICountryRepository _repository;
         private readonly IMapper _mapper;
@@ -215,13 +295,46 @@ namespace Hospital_API.Application.RequestHandlers
             _mapper = mapper;
         }
 
-        public Task<ResponseModelView> Handle(GetAllCountryRequest request, CancellationToken cancellationToken)
+        public Task<ResponsePaginationModelView> Handle(GetAllCountryRequest request, CancellationToken cancellationToken)
         {
-            var result = new ResponseModelView();
+            var result = new ResponsePaginationModelView();
 
-            var countries = _repository.GetAll().AsNoTracking().ToList();
+            var predicate = PredicateBuilder.True<Country>();
 
-            if (!countries.Any())
+            List<Country>? countryResult = new List<Country>();
+
+            var countries = _repository.GetAll().AsNoTracking();
+
+            if(!string.IsNullOrWhiteSpace(request.CountryFilterDto!.Name))
+            {
+                predicate = predicate.And(x => x.Name!.Contains(request.CountryFilterDto.Name))
+                    .Or(x => x.Description!.Contains(request.CountryFilterDto.Name));
+            }
+            if(!string.IsNullOrWhiteSpace(request.CountryFilterDto.Code))
+            {
+                predicate = predicate.Or(x => x.Code!.Contains(request.CountryFilterDto.Code));
+            }
+
+            countries = countries.Where(predicate);
+
+            if (request.CountryFilterDto.CurrentPage > 0 && request.CountryFilterDto.PageSize > 0)
+            {
+                var pagedResult = countries.GetPaged(request.CountryFilterDto.CurrentPage,
+                    request.CountryFilterDto.PageSize);
+
+                countryResult = pagedResult.Results as List<Country>;
+                result.CurrentPage = pagedResult.CurrentPage;
+                result.PageSize = pagedResult.PageSize;
+                result.TotalRecords = pagedResult.RowCount;
+                result.TotalPages = pagedResult.PageCount;
+
+            }
+            else
+            {
+                countryResult = countries.ToList();
+            }
+
+            if (!countryResult!.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Countries not found!";
@@ -233,7 +346,7 @@ namespace Hospital_API.Application.RequestHandlers
             result.StatusCode = StatusCodes.Status200OK;
             result.IsSuccessful = true;
             result.ErrorMessage = null;
-            result.Response = _mapper.Map<IEnumerable<Country>, IEnumerable<CountryView>>(countries);
+            result.Response = _mapper.Map<IEnumerable<Country>, IEnumerable<CountryView>>(countryResult!);
 
             return Task.FromResult(result);
         }

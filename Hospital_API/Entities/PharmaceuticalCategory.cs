@@ -10,8 +10,8 @@
         public bool Active { get; set; }
 
         public int VendorId { get; set; }
-        public Vendor Vendor { get; set; }
+        public virtual Vendor? Vendor { get; set; }
 
-        public ICollection<Pharmaceutical> Pharmaceuticals { get; set; }
+        public virtual ICollection<Pharmaceutical>? Pharmaceuticals { get; set; }
     }
 }

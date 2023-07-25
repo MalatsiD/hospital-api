@@ -1,6 +1,7 @@
 ﻿using Hospital_API.Data.Abstract;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using System.Linq.Expressions;
 
 namespace Hospital_API.Data.Repositories
 {
@@ -64,6 +65,26 @@ namespace Hospital_API.Data.Repositories
             }
 
             return entities;
+        }
+
+        public virtual bool Delete(T entity)
+        {
+            EntityEntry dbEntityEntry = _context.Entry<T>(entity);
+            dbEntityEntry.State = EntityState.Deleted;
+
+            return true;
+        }
+
+        public virtual bool DeleteWhere(Expression<Func<T, bool>> predicate)
+        {
+            IEnumerable<T> entities = _context.Set<T>().Where(predicate);
+
+            foreach (var entity in entities)
+            {
+                _context.Entry<T>(entity).State = EntityState.Deleted;
+            }
+
+            return true;
         }
     }
 }

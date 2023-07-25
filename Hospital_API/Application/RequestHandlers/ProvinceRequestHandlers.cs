@@ -178,6 +178,41 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
+    public class CheckCountryInProvinceExistRequestHandler : IRequestHandler<CheckCountryInProvinceExistRequest, ResponseModelView>
+    {
+        private readonly IProvinceRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckCountryInProvinceExistRequestHandler(IProvinceRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckCountryInProvinceExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var countryExist = _repository.FindBy(x => x.CountryId == request.CountryId).AsNoTracking().Any();
+
+            if (countryExist)
+            {
+                result.StatusCode = StatusCodes.Status200OK;
+                result.ErrorMessage = "Country cannot be deleted!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = countryExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
     public class GetSingleProvinceRequestHandler : IRequestHandler<GetSingleProvinceRequest, ResponseModelView>
     {
         private readonly IProvinceRepository _repository;

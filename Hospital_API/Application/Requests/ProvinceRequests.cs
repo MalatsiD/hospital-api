@@ -27,6 +27,11 @@ namespace Hospital_API.Application.Requests
         public string? Name { get; set; }
     }
 
+    public class CheckCountryInProvinceExistRequest : IRequest<ResponseModelView>
+    {
+        public int CountryId { get; set; }
+    }
+
     public class GetSingleProvinceRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }
