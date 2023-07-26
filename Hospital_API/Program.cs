@@ -24,6 +24,7 @@ builder.Services.AddScoped<ICityRepository, CityRepository>();
 builder.Services.AddScoped<IGenderRepository, GenderRepository>();
 builder.Services.AddScoped<ITitleRepository, TitleRepository>();
 builder.Services.AddScoped<IAddressTypeRepository, AddressTypeRepository>();
+builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IAilmentRepository, AilmentRepository>();
 builder.Services.AddScoped<IHospitalRepository, HospitalRepository>();
 builder.Services.AddScoped<IHospitalAddressRepository, HospitalAddressRepository>();

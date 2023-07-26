@@ -2,6 +2,7 @@
 using Hospital_API.Application.Requests;
 using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
+using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -96,6 +97,85 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
+    public class UpdateCityStatusRequestHandler : IRequestHandler<UpdateCityStatusRequest, ResponseModelView>
+    {
+        private readonly ICityRepository _repository;
+        private readonly IMapper _mapper;
+
+        public UpdateCityStatusRequestHandler(ICityRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(UpdateCityStatusRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var city = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (city == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "City not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            city.DateModified = DateTime.Now;
+            city.Active = request.StatusChangeDto?.Active ?? city.Active;
+
+            _repository.Update(city);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<City, CityView>(city);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class DeleteCityRequestHandler : IRequestHandler<DeleteCityRequest, ResponseModelView>
+    {
+        private readonly ICityRepository _repository;
+        private readonly IMapper _mapper;
+
+        public DeleteCityRequestHandler(ICityRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(DeleteCityRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var city = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (city == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "City not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            var res = _repository.Delete(city);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = res;
+
+            return Task.FromResult(result);
+        }
+    }
+
     public class CheckCityExistRequestHandler : IRequestHandler<CheckCityExistRequest, ResponseModelView>
     {
         private readonly ICityRepository _repository;
@@ -173,6 +253,41 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
+    public class CheckProvinceInCityExistRequestHandler : IRequestHandler<CheckProvinceInCityExistRequest, ResponseModelView>
+    {
+        private readonly ICityRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckProvinceInCityExistRequestHandler(ICityRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckProvinceInCityExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var provinceExist = _repository.FindBy(x => x.ProvinceId == request.ProvinceId).AsNoTracking().Any();
+
+            if (provinceExist)
+            {
+                result.StatusCode = StatusCodes.Status200OK;
+                result.ErrorMessage = "Province cannot be deleted!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = provinceExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
     public class GetSingleCityRequestHandler : IRequestHandler<GetSingleCityRequest, ResponseModelView>
     {
         private readonly ICityRepository _repository;
@@ -209,7 +324,7 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
-    public class GetAllCityRequestHandler : IRequestHandler<GetAllCityRequest, ResponseModelView>
+    public class GetAllCityRequestHandler : IRequestHandler<GetAllCityRequest, ResponsePaginationModelView>
     {
         private readonly ICityRepository _repository;
         private readonly IMapper _mapper;
@@ -220,13 +335,46 @@ namespace Hospital_API.Application.RequestHandlers
             _mapper = mapper;
         }
 
-        public Task<ResponseModelView> Handle(GetAllCityRequest request, CancellationToken cancellationToken)
+        public Task<ResponsePaginationModelView> Handle(GetAllCityRequest request, CancellationToken cancellationToken)
         {
-            var result = new ResponseModelView();
+            var result = new ResponsePaginationModelView();
 
-            var cities = _repository.GetAll().Include(x => x.Province).AsNoTracking().ToList();
+            var predicate = PredicateBuilder.True<City>();
 
-            if(!cities.Any())
+            List<City>? cityResult = new List<City>();
+
+            var cities = _repository.GetAll().Include(x => x.Province).AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(request.CityFilterDto!.Name))
+            {
+                predicate = predicate.And(x => x.Name!.Contains(request.CityFilterDto.Name))
+                    .Or(x => x.Description!.Contains(request.CityFilterDto.Name));
+            }
+            if (!string.IsNullOrWhiteSpace(request.CityFilterDto.ProvinceName))
+            {
+                predicate = predicate.Or(x => x.Province!.Name!.Contains(request.CityFilterDto.ProvinceName));
+            }
+
+            cities = cities.Where(predicate);
+
+            if (request.CityFilterDto.CurrentPage > 0 && request.CityFilterDto.PageSize > 0)
+            {
+                var pagedResult = cities.GetPaged(request.CityFilterDto.CurrentPage,
+                    request.CityFilterDto.PageSize);
+
+                cityResult = pagedResult.Results as List<City>;
+                result.CurrentPage = pagedResult.CurrentPage;
+                result.PageSize = pagedResult.PageSize;
+                result.TotalRecords = pagedResult.RowCount;
+                result.TotalPages = pagedResult.PageCount;
+
+            }
+            else
+            {
+                cityResult = cities.ToList();
+            }
+
+            if (!cityResult!.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Cities not found!";
@@ -238,7 +386,7 @@ namespace Hospital_API.Application.RequestHandlers
             result.StatusCode = StatusCodes.Status200OK;
             result.IsSuccessful = true;
             result.ErrorMessage = null;
-            result.Response = _mapper.Map<IEnumerable<City>, IEnumerable<CityView>>(cities);
+            result.Response = _mapper.Map<IEnumerable<City>, IEnumerable<CityView>>(cityResult!);
 
             return Task.FromResult(result);
         }

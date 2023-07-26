@@ -33,6 +33,11 @@ namespace Hospital_API.Data.Repositories
         public AddressTypeRepository(MyDbContext context) : base(context) { }
     }
 
+    public class AddressRepository : EntityBaseRepository<Address>, IAddressRepository
+    {
+        public AddressRepository(MyDbContext context) : base(context) { }
+    }
+
     public class AilmentRepository : EntityBaseRepository<Ailment>, IAilmentRepository
     {
         public AilmentRepository(MyDbContext context) : base(context) { }

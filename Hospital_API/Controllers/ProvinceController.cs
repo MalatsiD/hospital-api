@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -77,6 +78,42 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeProvinceStatus/{id}")]
+        public async Task<IActionResult> UpdateProvinceStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var request = new UpdateProvinceStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteProvince(int id)
+        {
+
+            var checkProvinceInCityExistRequest = new CheckProvinceInCityExistRequest();
+            checkProvinceInCityExistRequest.ProvinceId = id;
+            var checkCountryResult = await _mediator.Send(checkProvinceInCityExistRequest);
+
+            if (!checkCountryResult.IsSuccessful)
+            {
+                return StatusCode(checkCountryResult.StatusCode, checkCountryResult);
+            }
+
+            var request = new DeleteProvinceRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleProvince(int id)
         {
@@ -87,10 +124,22 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("ProvinceList/{active}")]
+        public async Task<IActionResult> GetAllProvinceList(bool active = true)
+        {
+            var request = new GetAllProvinceListRequest();
+            request.Active = active;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet]
-        public async Task<IActionResult> GetAllProvinces()
+        public async Task<IActionResult> GetAllProvinces([FromQuery] ProvinceFilterDto provinceFilterDto)
         {
             var request = new GetAllProvinceRequest();
+            request.ProvinceFilterDto = provinceFilterDto;
+
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

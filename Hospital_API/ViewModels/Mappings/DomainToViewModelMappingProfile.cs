@@ -17,6 +17,7 @@ namespace Hospital_API.ViewModels.Mappings
                 .ForMember(pv => pv.CountryName, opt => opt.MapFrom(p => p.Country!.Name));
             CreateMap<City, CityView>()
                 .ForMember(cw => cw.ProvinceName, opt => opt.MapFrom(c => c.Province!.Name));
+            CreateMap<Province, ProvinceListView>();
             CreateMap<Gender, GenderView>();
             CreateMap<Title, TitleView>();
             CreateMap<AddressType, AddressTypeView>();

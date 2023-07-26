@@ -1,4 +1,5 @@
 ﻿using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 
@@ -13,6 +14,17 @@ namespace Hospital_API.Application.Requests
     {
         public int Id { get; set; }
         public ProvinceDto? ProvinceDto { get; set; }
+    }
+
+    public class UpdateProvinceStatusRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
+        public StatusChangeDto? StatusChangeDto { get; set; }
+    }
+
+    public class DeleteProvinceRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
     }
 
     public class CheckProvinceExistRequest : IRequest<ResponseModelView>
@@ -37,8 +49,14 @@ namespace Hospital_API.Application.Requests
         public int Id { get; set; }
     }
 
-    public class GetAllProvinceRequest : IRequest<ResponseModelView>
+    public class GetAllProvinceListRequest : IRequest<ResponseModelView>
     {
+        public bool? Active { get; set; } = true;
+    }
+
+    public class GetAllProvinceRequest : IRequest<ResponsePaginationModelView>
+    {
+        public ProvinceFilterDto? ProvinceFilterDto { get; set; }
         public bool? Active { get; set; }
     }
 }

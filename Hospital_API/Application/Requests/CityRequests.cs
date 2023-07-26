@@ -1,4 +1,5 @@
 ﻿using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 
@@ -21,10 +22,26 @@ namespace Hospital_API.Application.Requests
         public string? Name { get; set; }
     }
 
+    public class CheckProvinceInCityExistRequest : IRequest<ResponseModelView>
+    {
+        public int ProvinceId { get; set; }
+    }
+
     public class UpdateCityRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }
         public CityDto? CityDto { get; set; }
+    }
+
+    public class UpdateCityStatusRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
+        public StatusChangeDto? StatusChangeDto { get; set; }
+    }
+
+    public class DeleteCityRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
     }
 
     public class GetSingleCityRequest : IRequest<ResponseModelView>
@@ -32,8 +49,9 @@ namespace Hospital_API.Application.Requests
         public int Id { get; set; }
     }
 
-    public class GetAllCityRequest : IRequest<ResponseModelView>
+    public class GetAllCityRequest : IRequest<ResponsePaginationModelView>
     {
+        public CityFilterDto? CityFilterDto { get; set; }
         public bool? Active { get; set; }
     }
 }

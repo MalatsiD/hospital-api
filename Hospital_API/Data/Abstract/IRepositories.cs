@@ -8,6 +8,7 @@ namespace Hospital_API.Data.Abstract
     public interface IGenderRepository : IEntityBaseRepository<Gender> { }
     public interface ITitleRepository : IEntityBaseRepository<Title> { }
     public interface IAddressTypeRepository : IEntityBaseRepository<AddressType> { }
+    public interface IAddressRepository : IEntityBaseRepository<Address> { }
     public interface IAilmentRepository : IEntityBaseRepository<Ailment> { }
     public interface IHospitalRepository : IEntityBaseRepository<Hospital> { }
     public interface IHospitalAddressRepository : IEntityBaseRepository<HospitalAddress> { }

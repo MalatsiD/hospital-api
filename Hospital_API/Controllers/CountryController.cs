@@ -111,6 +111,16 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("CountryList/{active}")]
+        public async Task<IActionResult> GetAllCountryList(bool active = true)
+        {
+            var request = new GetAllCountryListRequest();
+            request.Active = active;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet]
         public async Task<IActionResult> GetAllCountries([FromQuery] CountryFilterDto countryFilterDto)
         {

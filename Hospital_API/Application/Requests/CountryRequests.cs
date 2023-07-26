@@ -41,12 +41,15 @@ namespace Hospital_API.Application.Requests
     public class GetSingleCountryRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }
+    }
+
+    public class GetAllCountryListRequest : IRequest<ResponseModelView>
+    {
         public bool? Active { get; set; } = true;
     }
 
     public class GetAllCountryRequest : IRequest<ResponsePaginationModelView>
     {
         public CountryFilterDto? CountryFilterDto { get; set; }
-        public bool? Active { get; set; }
     }
 }

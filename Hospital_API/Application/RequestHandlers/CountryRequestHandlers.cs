@@ -226,7 +226,7 @@ namespace Hospital_API.Application.RequestHandlers
 
             if(request.CountryId > 0)
             {
-                country = country.Where(x => x.Id == request.CountryId);
+                country = country.Where(x => x.Id != request.CountryId);
             }
 
             var exist = country.AsNoTracking().Any();
@@ -279,6 +279,41 @@ namespace Hospital_API.Application.RequestHandlers
             result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Country, CountryView>(country);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class GetAllCountryListRequestHandler : IRequestHandler<GetAllCountryListRequest, ResponseModelView>
+    {
+        private readonly ICountryRepository _repository;
+        private readonly IMapper _mapper;
+
+        public GetAllCountryListRequestHandler(ICountryRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(GetAllCountryListRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var countries = _repository.FindBy(x => x.Active == request.Active).AsNoTracking().ToList();
+
+            if (!countries.Any())
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Countries not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<IEnumerable<Country>, IEnumerable<CountryView>>(countries);
 
             return Task.FromResult(result);
         }

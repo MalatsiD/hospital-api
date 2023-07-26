@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -77,6 +78,42 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeCityStatus/{id}")]
+        public async Task<IActionResult> UpdateCityStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var request = new UpdateCityStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCity(int id)
+        {
+
+            var checkCityInAddressExistRequest = new CheckCityInAddressExistRequest();
+            checkCityInAddressExistRequest.CityId = id;
+            var checkCountryResult = await _mediator.Send(checkCityInAddressExistRequest);
+
+            if (!checkCountryResult.IsSuccessful)
+            {
+                return StatusCode(checkCountryResult.StatusCode, checkCountryResult);
+            }
+
+            var request = new DeleteCityRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleCity(int id)
         {
@@ -88,9 +125,10 @@ namespace Hospital_API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCities()
+        public async Task<IActionResult> GetAllCities([FromQuery] CityFilterDto cityFilterDto)
         {
             var request = new GetAllCityRequest();
+            request.CityFilterDto = cityFilterDto;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);
