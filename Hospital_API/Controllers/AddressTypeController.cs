@@ -1,5 +1,6 @@
 ﻿using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -63,6 +64,42 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeAddressTypeStatus/{id}")]
+        public async Task<IActionResult> UpdateAddressTypeStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var request = new UpdateAddressTypeStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteAddressType(int id)
+        {
+
+            var checkAddressTypeInAddressExistRequest = new CheckAddressTypeInAddressExistRequest();
+            checkAddressTypeInAddressExistRequest.AddressTypeId = id;
+            var checkAddressTypeResult = await _mediator.Send(checkAddressTypeInAddressExistRequest);
+
+            if (!checkAddressTypeResult.IsSuccessful)
+            {
+                return StatusCode(checkAddressTypeResult.StatusCode, checkAddressTypeResult);
+            }
+
+            var request = new DeleteAddressTypeRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleAddressType(int id)
         {
@@ -74,9 +111,10 @@ namespace Hospital_API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllAddressTypes()
+        public async Task<IActionResult> GetAllAddressTypes([FromQuery] AddressTypeFilterDto addressTypeFilterDto)
         {
             var request = new GetAllAddressTypeRequest();
+            request.AddressTypeFilterDto = addressTypeFilterDto;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

@@ -7,4 +7,9 @@ namespace Hospital_API.Application.Requests
     {
         public int CityId { get; set; }
     }
+
+    public class CheckAddressTypeInAddressExistRequest : IRequest<ResponseModelView>
+    {
+        public int AddressTypeId { get; set; }
+    }
 }
