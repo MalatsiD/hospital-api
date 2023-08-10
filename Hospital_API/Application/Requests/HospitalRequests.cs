@@ -1,4 +1,5 @@
 ﻿using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 
@@ -13,6 +14,17 @@ namespace Hospital_API.Application.Requests
     {
         public int Id { get; set; }
         public HospitalDto? HospitalDto { get; set; }
+    }
+
+    public class UpdateHospitalStatusRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
+        public StatusChangeDto? StatusChangeDto { get; set; }
+    }
+
+    public class DeleteHospitalRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
     }
 
     public class ValidateHospitalRequest : IRequest<ResponseModelView>
@@ -37,8 +49,14 @@ namespace Hospital_API.Application.Requests
         public int Id { get; set; }
     }
 
-    public class GetAllHospitalRequest : IRequest<ResponseModelView>
+    public class GetAllHospitalListRequest : IRequest<ResponseModelView>
     {
+        public bool? Active { get; set; } = true;
+    }
+
+    public class GetAllHospitalRequest : IRequest<ResponsePaginationModelView>
+    {
+        public HospitalFilterDto? HospitalFilterDto { get; set; }
         public bool? Active { get; set; }
     }
 }

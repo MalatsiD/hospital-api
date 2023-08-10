@@ -2,9 +2,13 @@
 using Hospital_API.Entities;
 using Hospital_API.ModelViews.EmployeeViews;
 using Hospital_API.ModelViews.PatientViews;
+using Hospital_API.ViewModels.CityViews;
+using Hospital_API.ViewModels.CountryViews;
 using Hospital_API.ViewModels.EmployeeViews;
+using Hospital_API.ViewModels.HospitalViews;
 using Hospital_API.ViewModels.PatientViews;
 using Hospital_API.ViewModels.PersonViews;
+using Hospital_API.ViewModels.ProvinceViews;
 
 namespace Hospital_API.ViewModels.Mappings
 {
@@ -13,34 +17,39 @@ namespace Hospital_API.ViewModels.Mappings
         public DomainToViewModelMappingProfile()
         {
             CreateMap<Country, CountryView>();
+            CreateMap<Country, CountryListView>();
+            CreateMap<Country, CountryProvinceListView>();
             CreateMap<Province, ProvinceView>()
                 .ForMember(pv => pv.CountryName, opt => opt.MapFrom(p => p.Country!.Name));
+            CreateMap<Province, ProvinceListView>();
             CreateMap<City, CityView>()
                 .ForMember(cw => cw.ProvinceName, opt => opt.MapFrom(c => c.Province!.Name));
-            CreateMap<Province, ProvinceListView>();
+            CreateMap<City, CityListView>();
             CreateMap<Gender, GenderView>();
             CreateMap<Title, TitleView>();
             CreateMap<AddressType, AddressTypeView>();
             CreateMap<Ailment, AilmentView>();
 
             CreateMap<Address, AddressView>()
-                .ForMember(av => av.AddressTypeName, opt => opt.MapFrom(a => a.AddressType.Name))
-                .ForMember(av => av.CityName, opt => opt.MapFrom(a => a.City.Name));
+                .ForMember(av => av.AddressTypeName, opt => opt.MapFrom(a => a.AddressType!.Name))
+                .ForMember(av => av.CityName, opt => opt.MapFrom(a => a.City!.Name));
 
             CreateMap<HospitalAddress, HospitalAddressView>()
                 .ForMember(hav => hav.AddressDetail, opt => opt.MapFrom(ha => ha.Address.AddressDetail))
                 .ForMember(hav => hav.ZipCode, opt => opt.MapFrom(ha => ha.Address.ZipCode))
                 .ForMember(hav => hav.CityId, opt => opt.MapFrom(ha => ha.Address.CityId))
-                .ForMember(hav => hav.CityName, opt => opt.MapFrom(ha => ha.Address.City.Name))
+                .ForMember(hav => hav.CityName, opt => opt.MapFrom(ha => ha.Address.City!.Name))
                 .ForMember(hav => hav.AddressTypeId, opt => opt.MapFrom(ha => ha.Address.AddressTypeId))
-                .ForMember(hav => hav.AddressTypeName, opt => opt.MapFrom(ha => ha.Address.AddressType.Name))
-                .ForMember(hav => hav.ProvinceId, opt => opt.MapFrom(ha => ha.Address.City.ProvinceId))
-                .ForMember(hav => hav.ProvinceName, opt => opt.MapFrom(ha => ha.Address.City.Province!.Name))
-                .ForMember(hav => hav.CountryId, opt => opt.MapFrom(ha => ha.Address.City.Province!.CountryId))
-                .ForMember(hav => hav.CountryName, opt => opt.MapFrom(ha => ha.Address.City.Province!.Country!.Name));
+                .ForMember(hav => hav.AddressTypeName, opt => opt.MapFrom(ha => ha.Address.AddressType!.Name))
+                .ForMember(hav => hav.ProvinceId, opt => opt.MapFrom(ha => ha.Address.City!.ProvinceId))
+                .ForMember(hav => hav.ProvinceName, opt => opt.MapFrom(ha => ha.Address.City!.Province!.Name))
+                .ForMember(hav => hav.CountryId, opt => opt.MapFrom(ha => ha.Address.City!.Province!.CountryId))
+                .ForMember(hav => hav.CountryName, opt => opt.MapFrom(ha => ha.Address.City!.Province!.Country!.Name));
 
             CreateMap<Hospital, HospitalView>()
                 .ForMember(hv => hv.Addresses, opt => opt.MapFrom(h => h.Addresses));
+
+            CreateMap<Hospital, HospitalListView>();
 
             CreateMap<Vendor, VendorView>()
                 .ForMember(vv => vv.HospitalName, opt => opt.MapFrom(v => v.Hospital!.Name));
@@ -59,13 +68,13 @@ namespace Hospital_API.ViewModels.Mappings
                 .ForMember(pav => pav.AddressDetail, opt => opt.MapFrom(pa => pa.Address!.AddressDetail))
                 .ForMember(pav => pav.ZipCode, opt => opt.MapFrom(pa => pa.Address!.ZipCode))
                 .ForMember(pav => pav.AddressTypeId, opt => opt.MapFrom(pa => pa.Address!.AddressTypeId))
-                .ForMember(pav => pav.AddressTypeName, opt => opt.MapFrom(pa => pa.Address!.AddressType.Name))
+                .ForMember(pav => pav.AddressTypeName, opt => opt.MapFrom(pa => pa.Address!.AddressType!.Name))
                 .ForMember(pav => pav.CityId, opt => opt.MapFrom(pa => pa.Address!.CityId))
-                .ForMember(pav => pav.CityName, opt => opt.MapFrom(pa => pa.Address!.City.Name))
-                .ForMember(pav => pav.ProvinceId, opt => opt.MapFrom(pa => pa.Address!.City.ProvinceId))
-                .ForMember(pav => pav.ProvinceName, opt => opt.MapFrom(pa => pa.Address!.City.Province!.Name))
-                .ForMember(pav => pav.CountryId, opt => opt.MapFrom(pa => pa.Address!.City.Province!.CountryId))
-                .ForMember(pav => pav.CountryName, opt => opt.MapFrom(pa => pa.Address!.City.Province!.Country!.Name));
+                .ForMember(pav => pav.CityName, opt => opt.MapFrom(pa => pa.Address!.City!.Name))
+                .ForMember(pav => pav.ProvinceId, opt => opt.MapFrom(pa => pa.Address!.City!.ProvinceId))
+                .ForMember(pav => pav.ProvinceName, opt => opt.MapFrom(pa => pa.Address!.City!.Province!.Name))
+                .ForMember(pav => pav.CountryId, opt => opt.MapFrom(pa => pa.Address!.City!.Province!.CountryId))
+                .ForMember(pav => pav.CountryName, opt => opt.MapFrom(pa => pa.Address!.City!.Province!.Country!.Name));
 
 
             //=========================================PERSON MAP=========================================
@@ -78,13 +87,13 @@ namespace Hospital_API.ViewModels.Mappings
                 .ForMember(av => av.AddressDetail, opt => opt.MapFrom(pa => pa.Address!.AddressDetail))
                 .ForMember(av => av.ZipCode, opt => opt.MapFrom(pa => pa.Address!.ZipCode))
                 .ForMember(av => av.AddressTypeId, opt => opt.MapFrom(pa => pa.Address!.AddressTypeId))
-                .ForMember(av => av.AddressTypeName, opt => opt.MapFrom(pa => pa.Address!.AddressType.Name))
+                .ForMember(av => av.AddressTypeName, opt => opt.MapFrom(pa => pa.Address!.AddressType!.Name))
                 .ForMember(av => av.CityId, opt => opt.MapFrom(pa => pa.Address!.CityId))
-                .ForMember(av => av.CityName, opt => opt.MapFrom(pa => pa.Address!.City.Name))
-                .ForMember(av => av.ProvinceId, opt => opt.MapFrom(pa => pa.Address!.City.ProvinceId))
-                .ForMember(av => av.ProvinceName, opt => opt.MapFrom(pa => pa.Address!.City.Province!.Name))
-                .ForMember(av => av.CountryId, opt => opt.MapFrom(pa => pa.Address!.City.Province!.CountryId))
-                .ForMember(av => av.CountryName, opt => opt.MapFrom(pa => pa.Address!.City.Province!.Country!.Name));
+                .ForMember(av => av.CityName, opt => opt.MapFrom(pa => pa.Address!.City!.Name))
+                .ForMember(av => av.ProvinceId, opt => opt.MapFrom(pa => pa.Address!.City!.ProvinceId))
+                .ForMember(av => av.ProvinceName, opt => opt.MapFrom(pa => pa.Address!.City!.Province!.Name))
+                .ForMember(av => av.CountryId, opt => opt.MapFrom(pa => pa.Address!.City!.Province!.CountryId))
+                .ForMember(av => av.CountryName, opt => opt.MapFrom(pa => pa.Address!.City!.Province!.Country!.Name));
 
             CreateMap<Person, EmployeeSingleView>()
                 .ForMember(psv => psv.FirstName, opt => opt.MapFrom(p => p.FirstName))

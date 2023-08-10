@@ -1,5 +1,7 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -19,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddHospital(HospitalDto hospitalDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkHospital = CheckHospitalExist(hospitalDto.Name!);
 
             if(!checkHospital.Result.IsSuccessful)
@@ -52,13 +50,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateHospital(int id, HospitalDto hospitalDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkHospital = CheckHospitalExist(hospitalDto.Name!, id);
 
             if (!checkHospital.Result.IsSuccessful)
@@ -85,6 +79,38 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeHospitalStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<IActionResult> UpdateHospitalStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            var request = new UpdateHospitalStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCity(int id)
+        {
+
+            var checkHospitalInDepartmentExistRequest = new CheckHospitalInDepartmentExistRequest();
+            checkHospitalInDepartmentExistRequest.HospitalId = id;
+            var checkHospitalResult = await _mediator.Send(checkHospitalInDepartmentExistRequest);
+
+            if (!checkHospitalResult.IsSuccessful)
+            {
+                return StatusCode(checkHospitalResult.StatusCode, checkHospitalResult);
+            }
+
+            var request = new DeleteHospitalRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleHospital(int id)
         {
@@ -95,10 +121,21 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpGet("HospitalList/{active}")]
+        public async Task<IActionResult> GetAllHospitalList(bool active = true)
+        {
+            var request = new GetAllHospitalListRequest();
+            request.Active = active;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet]
-        public async Task<IActionResult> GetAllHospitals()
+        public async Task<IActionResult> GetAllHospitals([FromQuery] HospitalFilterDto hospitalFilterDto)
         {
             var request = new GetAllHospitalRequest();
+            request.HospitalFilterDto = hospitalFilterDto;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

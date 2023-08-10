@@ -43,6 +43,11 @@ namespace Hospital_API.Data.Repositories
         public AilmentRepository(MyDbContext context) : base(context) { }
     }
 
+    public class AdmitAilmentRepository : EntityBaseRepository<AdmitAilment>, IAdmitAilmentRepository
+    {
+        public AdmitAilmentRepository(MyDbContext context) : base(context) { }
+    }
+
     public class HospitalRepository : EntityBaseRepository<Hospital>, IHospitalRepository
     {
         public HospitalRepository(MyDbContext context) : base(context) { }
@@ -96,6 +101,11 @@ namespace Hospital_API.Data.Repositories
     public class EmployeeRepository : EntityBaseRepository<Employee>, IEmployeeRepository
     {
         public EmployeeRepository(MyDbContext context) : base(context) { }
+    }
+
+    public class EmployeeRoleRepository : EntityBaseRepository<EmployeeRole>, IEmployeeRoleRepository
+    {
+        public EmployeeRoleRepository(MyDbContext context) : base(context) { }
     }
 
     public class PatientAdmitRepository : EntityBaseRepository<PatientAdmit>, IPatientAdmitRepository

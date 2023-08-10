@@ -51,6 +51,7 @@ namespace Hospital_API.Application.Requests
 
     public class GetAllProvinceListRequest : IRequest<ResponseModelView>
     {
+        public int CountryId { get; set; }
         public bool? Active { get; set; } = true;
     }
 

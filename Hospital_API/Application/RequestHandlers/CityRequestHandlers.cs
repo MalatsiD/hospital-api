@@ -4,6 +4,7 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
+using Hospital_API.ViewModels.CityViews;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
@@ -319,6 +320,45 @@ namespace Hospital_API.Application.RequestHandlers
             result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<City, CityView>(city!);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class GetCityListRequestHandler : IRequestHandler<GetCityListRequest, ResponseModelView>
+    {
+        private readonly ICityRepository _repository;
+        private readonly IMapper _mapper;
+
+        public GetCityListRequestHandler(ICityRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(GetCityListRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var cities = _repository.FindBy(x => 
+                    x.ProvinceId == (request.ProvinceId > 0 ? request.ProvinceId : x.ProvinceId) &&
+                    x.Active == request.Active
+                )
+                .AsNoTracking().ToList();
+
+            if (!cities.Any())
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Cities not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<IEnumerable<City>, IEnumerable<CityListView>>(cities);
 
             return Task.FromResult(result);
         }

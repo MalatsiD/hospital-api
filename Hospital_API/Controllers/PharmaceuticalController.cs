@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.ViewModels;
 using MediatR;
@@ -19,13 +20,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddPharmaceutical(PharmaceuticalDto pharmaceuticalDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkCategory = CheckPharmaceuticalCategoryExist(pharmaceuticalDto.PharmaceuticalCategoryId);
 
             if(!checkCategory.Result.IsSuccessful)
@@ -48,13 +45,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdatePharmaceutical(int id, PharmaceuticalDto pharmaceuticalDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkCategory = CheckPharmaceuticalCategoryExist(pharmaceuticalDto.PharmaceuticalCategoryId);
 
             if (!checkCategory.Result.IsSuccessful)

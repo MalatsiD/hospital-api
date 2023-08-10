@@ -1,4 +1,5 @@
-﻿using Hospital_API.DTOs.Validators;
+﻿using Hospital_API.DTOs.Address;
+using Hospital_API.DTOs.Validators;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
@@ -10,7 +11,7 @@ namespace Hospital_API.DTOs
         public string? Name { get; set; }
 
         [JsonProperty("phoneNumber")]
-        public long PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [JsonProperty("email")]
         public string? Email { get; set; }
@@ -21,6 +22,7 @@ namespace Hospital_API.DTOs
         [JsonProperty("active")]
         public bool Active { get; set; } = true;
 
+        [JsonProperty("addresses")]
         public virtual ICollection<AddressDto>? Addresses { get; set; }
 
         public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)

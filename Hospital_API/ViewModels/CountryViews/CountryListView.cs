@@ -1,8 +1,8 @@
 ﻿using Newtonsoft.Json;
 
-namespace Hospital_API.ViewModels
+namespace Hospital_API.ViewModels.CountryViews
 {
-    public class CountryView
+    public class CountryListView
     {
         [JsonProperty("id")]
         public int Id { get; set; }
@@ -12,11 +12,5 @@ namespace Hospital_API.ViewModels
 
         [JsonProperty("code")]
         public string? Code { get; set; }
-
-        [JsonProperty("description")]
-        public string? Description { get; set; }
-
-        [JsonProperty("active")]
-        public bool Active { get; set; }
     }
 }

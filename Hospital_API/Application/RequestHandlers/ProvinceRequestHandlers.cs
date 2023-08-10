@@ -4,6 +4,7 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
+using Hospital_API.ViewModels.ProvinceViews;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
@@ -344,7 +345,10 @@ namespace Hospital_API.Application.RequestHandlers
         {
             var result = new ResponseModelView();
 
-            var provinces = _repository.FindBy(x => x.Active == request.Active).AsNoTracking().ToList();
+            var provinces = _repository.FindBy(x => 
+                    x.CountryId == (request.CountryId > 0 ? request.CountryId : x.CountryId) &&
+                    x.Active == request.Active
+                ).AsNoTracking().ToList();
 
             if (!provinces.Any())
             {

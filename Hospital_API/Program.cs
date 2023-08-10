@@ -1,14 +1,26 @@
 using AutoMapper;
+using Hospital_API.ActionFilters;
 using Hospital_API.Data;
 using Hospital_API.Data.Abstract;
 using Hospital_API.Data.Repositories;
+using Hospital_API.Helpers;
+using Hospital_API.Middlewares;
 using Hospital_API.ViewModels.Mappings;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+builder.Services.AddScoped<ValidationFilterAttribute>();
+builder.Services.AddTransient<ExceptionMiddleware>();
+
+builder.Services.Configure<ApiBehaviorOptions > (opt =>
+{
+    opt.SuppressModelStateInvalidFilter = true;
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -26,6 +38,7 @@ builder.Services.AddScoped<ITitleRepository, TitleRepository>();
 builder.Services.AddScoped<IAddressTypeRepository, AddressTypeRepository>();
 builder.Services.AddScoped<IAddressRepository, AddressRepository>();
 builder.Services.AddScoped<IAilmentRepository, AilmentRepository>();
+builder.Services.AddScoped<IAdmitAilmentRepository, AdmitAilmentRepository>();
 builder.Services.AddScoped<IHospitalRepository, HospitalRepository>();
 builder.Services.AddScoped<IHospitalAddressRepository, HospitalAddressRepository>();
 builder.Services.AddScoped<IDepartmentRepository, DepartmentRepository>();
@@ -37,6 +50,7 @@ builder.Services.AddScoped<IPharmaceuticalRepository, PharmaceuticalRepository>(
 builder.Services.AddScoped<IPersonRepository, PersonRepository>();
 builder.Services.AddScoped<IPatientRepository, PatientRepository>();
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
+builder.Services.AddScoped<IEmployeeRoleRepository, EmployeeRoleRepository>();
 builder.Services.AddScoped<IPatientAdmitRepository, PatientAdmitRepository>();
 
 builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblies(Assembly.GetExecutingAssembly()));
@@ -68,6 +82,8 @@ app.UseCors(option =>
 });
 
 app.UseAuthorization();
+
+app.ConfigureExceptionMiddleware();
 
 app.MapControllers();
 

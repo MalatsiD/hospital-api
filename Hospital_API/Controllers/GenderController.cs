@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.ViewModels;
 using MediatR;
@@ -19,13 +20,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddGender(GenderDto genderDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkGender = CheckGenderNameExist(genderDto.Name!);
 
             if(!checkGender.Result.IsSuccessful) 
@@ -41,13 +38,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateGender(int id, GenderDto genderDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkGender = CheckGenderNameExist(genderDto.Name!, id);
 
             if (!checkGender.Result.IsSuccessful)
@@ -63,11 +56,53 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeGenderStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<IActionResult> UpdateGenderStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            var request = new UpdateGenderStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteGender(int id)
+        {
+
+            var checkGenderInPersonExistRequest = new CheckGenderInPersonExistRequest();
+            checkGenderInPersonExistRequest.GenderId = id;
+            var checkGenderResult = await _mediator.Send(checkGenderInPersonExistRequest);
+
+            if (!checkGenderResult.IsSuccessful)
+            {
+                return StatusCode(checkGenderResult.StatusCode, checkGenderResult);
+            }
+
+            var request = new DeleteGenderRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleGender(int id)
         {
             var request = new GetSingleGenderRequest();
             request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("GenderList/{active}")]
+        public async Task<IActionResult> GetAllGenderList(bool active = true)
+        {
+            var request = new GetAllGenderListRequest();
+            request.Active = active;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Hospital_API.ViewModels
+namespace Hospital_API.ViewModels.HospitalViews
 {
     public class HospitalAddressView : AddressView
     {

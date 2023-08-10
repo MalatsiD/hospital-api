@@ -8,11 +8,11 @@ namespace Hospital_API.DTOs.Validators
         {
             RuleFor(x => x.Name).NotEmpty()
                 .WithMessage("Hospital Name cannot be empty!");
-            RuleFor(x => x.PhoneNumber).NotEqual(0)
+            RuleFor(x => x.PhoneNumber).NotEmpty()
                 .WithMessage("Phone number cannot be empty!")
                 .DependentRules(() =>
                 {
-                    RuleFor(x => x.PhoneNumber.ToString()).Length(10)
+                    RuleFor(x => x.PhoneNumber).Length(10)
                     .WithMessage("Phone number must be 10 digits long!");
                 });
             RuleFor(x => x.Email).NotEmpty()

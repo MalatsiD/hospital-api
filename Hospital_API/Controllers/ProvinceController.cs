@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
@@ -20,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddProvince(ProvinceDto provinceDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkCountry = CheckCountryExist(provinceDto.CountryId);
 
             if(!checkCountry.Result.IsSuccessful)
@@ -49,13 +46,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateProvince(int id, ProvinceDto provinceDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkCountry = CheckCountryExist(provinceDto.CountryId);
 
             if (!checkCountry.Result.IsSuccessful)
@@ -79,13 +72,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("ChangeProvinceStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateProvinceStatus(int id, StatusChangeDto statusChangeDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new UpdateProvinceStatusRequest();
             request.Id = id;
             request.StatusChangeDto = statusChangeDto;
@@ -100,11 +89,11 @@ namespace Hospital_API.Controllers
 
             var checkProvinceInCityExistRequest = new CheckProvinceInCityExistRequest();
             checkProvinceInCityExistRequest.ProvinceId = id;
-            var checkCountryResult = await _mediator.Send(checkProvinceInCityExistRequest);
+            var checkProvinceResult = await _mediator.Send(checkProvinceInCityExistRequest);
 
-            if (!checkCountryResult.IsSuccessful)
+            if (!checkProvinceResult.IsSuccessful)
             {
-                return StatusCode(checkCountryResult.StatusCode, checkCountryResult);
+                return StatusCode(checkProvinceResult.StatusCode, checkProvinceResult);
             }
 
             var request = new DeleteProvinceRequest();
@@ -124,10 +113,11 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
-        [HttpGet("ProvinceList/{active}")]
-        public async Task<IActionResult> GetAllProvinceList(bool active = true)
+        [HttpGet("ProvinceList/{id}/{active}")]
+        public async Task<IActionResult> GetAllProvinceList(int id = 0, bool active = true)
         {
             var request = new GetAllProvinceListRequest();
+            request.CountryId = id;
             request.Active = active;
             var result = await _mediator.Send(request);
 

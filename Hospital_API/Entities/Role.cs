@@ -9,7 +9,7 @@
         public DateTime DateCreated { get; set; }
         public bool Active { get; set; }
 
-        public ICollection<DepartmentRole> Departments { get; set; }
-        public ICollection<EmployeeRole> Employees { get; set; }
+        public ICollection<DepartmentRole>? Departments { get; set; }
+        public ICollection<EmployeeRole>? Employees { get; set; }
     }
 }

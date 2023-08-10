@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
@@ -20,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddCity(CityDto cityDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkProvince = CheckProvinceExist(cityDto.ProvinceId);
 
             if(!checkProvince.Result.IsSuccessful)
@@ -49,13 +46,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateCity(int id, CityDto cityDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkProvince = CheckProvinceExist(cityDto.ProvinceId);
 
             if (!checkProvince.Result.IsSuccessful)
@@ -79,13 +72,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("ChangeCityStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateCityStatus(int id, StatusChangeDto statusChangeDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new UpdateCityStatusRequest();
             request.Id = id;
             request.StatusChangeDto = statusChangeDto;
@@ -100,11 +89,11 @@ namespace Hospital_API.Controllers
 
             var checkCityInAddressExistRequest = new CheckCityInAddressExistRequest();
             checkCityInAddressExistRequest.CityId = id;
-            var checkCountryResult = await _mediator.Send(checkCityInAddressExistRequest);
+            var checkCityResult = await _mediator.Send(checkCityInAddressExistRequest);
 
-            if (!checkCountryResult.IsSuccessful)
+            if (!checkCityResult.IsSuccessful)
             {
-                return StatusCode(checkCountryResult.StatusCode, checkCountryResult);
+                return StatusCode(checkCityResult.StatusCode, checkCityResult);
             }
 
             var request = new DeleteCityRequest();
@@ -119,6 +108,17 @@ namespace Hospital_API.Controllers
         {
             var request = new GetSingleCityRequest();
             request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("CityList/{id}/{active}")]
+        public async Task<IActionResult> GetCityList(int id = 0, bool active = true)
+        {
+            var request = new GetCityListRequest();
+            request.ProvinceId = id;
+            request.Active = active;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

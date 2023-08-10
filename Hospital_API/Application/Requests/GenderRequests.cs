@@ -15,6 +15,17 @@ namespace Hospital_API.Application.Requests
         public GenderDto? GenderDto { get; set; }
     }
 
+    public class UpdateGenderStatusRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
+        public StatusChangeDto? StatusChangeDto { get; set; }
+    }
+
+    public class DeleteGenderRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
+    }
+
     public class CheckGenderExistRequest : IRequest<ResponseModelView>
     {
         public int GenderId { get; set; }
@@ -29,6 +40,11 @@ namespace Hospital_API.Application.Requests
     public class GetSingleGenderRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }
+    }
+
+    public class GetAllGenderListRequest : IRequest<ResponseModelView>
+    {
+        public bool? Active { get; set; } = true;
     }
 
     public class GetAllGenderRequest : IRequest<ResponseModelView>

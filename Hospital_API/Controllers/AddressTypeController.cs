@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
@@ -20,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddAddressType(AddressTypeDto addressTypeDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var check = CheckAddressTypeNameExist(addressTypeDto.Name!);
 
             if (!check.Result.IsSuccessful)
@@ -42,13 +39,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateAddressType(int id, AddressTypeDto addressTypeDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var check = CheckAddressTypeNameExist(addressTypeDto.Name!, id);
 
             if (!check.Result.IsSuccessful)
@@ -65,13 +58,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("ChangeAddressTypeStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateAddressTypeStatus(int id, StatusChangeDto statusChangeDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new UpdateAddressTypeStatusRequest();
             request.Id = id;
             request.StatusChangeDto = statusChangeDto;

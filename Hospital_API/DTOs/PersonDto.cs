@@ -1,4 +1,5 @@
-﻿using Hospital_API.DTOs.Validators;
+﻿using Hospital_API.DTOs.Address;
+using Hospital_API.DTOs.Validators;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 

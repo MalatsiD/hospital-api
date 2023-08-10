@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
@@ -21,13 +22,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddCountry(CountryDto countryDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var check = CheckCountryExist(countryDto.Name!);
 
             if (!check.Result.IsSuccessful)
@@ -43,13 +40,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateCountry(int id, CountryDto countryDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var check = CheckCountryExist(countryDto.Name!, id);
 
             if (!check.Result.IsSuccessful)
@@ -66,13 +59,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("ChangeCountryStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateCountryStatus(int id, StatusChangeDto statusChangeDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new UpdateCountryStatusRequest();
             request.Id = id;
             request.StatusChangeDto = statusChangeDto;

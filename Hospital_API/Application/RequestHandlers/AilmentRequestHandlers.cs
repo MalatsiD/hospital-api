@@ -2,7 +2,10 @@
 using Hospital_API.Application.Requests;
 using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
+using Hospital_API.Helpers;
+using Hospital_API.Helpers.Pagination;
 using Hospital_API.ViewModels;
+using Hospital_API.ViewModels.CountryViews;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -84,6 +87,85 @@ namespace Hospital_API.Application.RequestHandlers
             result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Ailment, AilmentView>(ailment);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class UpdateAilmentStatusRequestHandler : IRequestHandler<UpdateAilmentStatusRequest, ResponseModelView>
+    {
+        private readonly IAilmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public UpdateAilmentStatusRequestHandler(IAilmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(UpdateAilmentStatusRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var ailment = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (ailment == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ailment not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            ailment.DateModified = DateTime.Now;
+            ailment.Active = request.StatusChangeDto?.Active ?? ailment.Active;
+
+            _repository.Update(ailment);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<Ailment, AilmentView>(ailment);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class DeleteAilmentRequestHandler : IRequestHandler<DeleteAilmentRequest, ResponseModelView>
+    {
+        private readonly IAilmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public DeleteAilmentRequestHandler(IAilmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(DeleteAilmentRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var ailment = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (ailment == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ailment not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            var res = _repository.Delete(ailment);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = res;
 
             return Task.FromResult(result);
         }
@@ -201,24 +283,24 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
-    public class GetAllAilmentRequestHandler : IRequestHandler<GetAllAilmentRequest, ResponseModelView>
+    public class GetAllAilmentListRequestHandler : IRequestHandler<GetAllAilmentListRequest, ResponseModelView>
     {
         private readonly IAilmentRepository _repository;
         private readonly IMapper _mapper;
 
-        public GetAllAilmentRequestHandler(IAilmentRepository repository, IMapper mapper)
+        public GetAllAilmentListRequestHandler(IAilmentRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
 
-        public Task<ResponseModelView> Handle(GetAllAilmentRequest request, CancellationToken cancellationToken)
+        public Task<ResponseModelView> Handle(GetAllAilmentListRequest request, CancellationToken cancellationToken)
         {
             var result = new ResponseModelView();
 
-            var ailmentsList = _repository.GetAll().AsNoTracking().ToList();
+            var ailments = _repository.FindBy(x => x.Active == request.Active).AsNoTracking().ToList();
 
-            if (!ailmentsList.Any())
+            if (!ailments.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Ailments not found!";
@@ -230,7 +312,71 @@ namespace Hospital_API.Application.RequestHandlers
             result.StatusCode = StatusCodes.Status200OK;
             result.IsSuccessful = true;
             result.ErrorMessage = null;
-            result.Response = _mapper.Map<IEnumerable<Ailment>, IEnumerable<AilmentView>>(ailmentsList);
+            result.Response = _mapper.Map<IEnumerable<Ailment>, IEnumerable<AilmentView>>(ailments);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class GetAllAilmentRequestHandler : IRequestHandler<GetAllAilmentRequest, ResponsePaginationModelView>
+    {
+        private readonly IAilmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public GetAllAilmentRequestHandler(IAilmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponsePaginationModelView> Handle(GetAllAilmentRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponsePaginationModelView();
+
+            var predicate = PredicateBuilder.True<Ailment>();
+
+            List<Ailment>? ailmentResult = new List<Ailment>();
+
+            var ailments = _repository.GetAll().AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(request.ailmentFilterDto!.Name))
+            {
+                predicate = predicate.And(x => x.Name!.Contains(request.ailmentFilterDto.Name))
+                    .Or(x => x.Description!.Contains(request.ailmentFilterDto.Name));
+            }
+
+            ailments = ailments.Where(predicate);
+
+            if (request.ailmentFilterDto.CurrentPage > 0 && request.ailmentFilterDto.PageSize > 0)
+            {
+                var pagedResult = ailments.GetPaged(request.ailmentFilterDto.CurrentPage,
+                    request.ailmentFilterDto.PageSize);
+
+                ailmentResult = pagedResult.Results as List<Ailment>;
+                result.CurrentPage = pagedResult.CurrentPage;
+                result.PageSize = pagedResult.PageSize;
+                result.TotalRecords = pagedResult.RowCount;
+                result.TotalPages = pagedResult.PageCount;
+
+            }
+            else
+            {
+                ailmentResult = ailments.ToList();
+            }
+
+            if (!ailmentResult!.Any())
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Ailments not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<IEnumerable<Ailment>, IEnumerable<AilmentView>>(ailmentResult!);
 
             return Task.FromResult(result);
         }

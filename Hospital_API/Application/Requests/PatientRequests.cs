@@ -48,6 +48,11 @@ namespace Hospital_API.Application.Requests
         public int PatientId { get; set; }
     }
 
+    public class CheckGenderInPatientExistRequest : IRequest<ResponseModelView>
+    {
+        public int roleId { get; set; }
+    }
+
     public class GetSinglePatientRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

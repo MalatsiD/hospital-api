@@ -5,7 +5,7 @@ namespace Hospital_API.ModelViews.EmployeeViews
 {
     public class EmployeeDetailView : EmployeeView
     {
-        public ICollection<DepartmentView>? Departments { get; set; }
-        public ICollection<RoleView> Roles { get; set; }
+        //public ICollection<DepartmentView>? Departments { get; set; }
+        public ICollection<RoleView>? Roles { get; set; }
     }
 }

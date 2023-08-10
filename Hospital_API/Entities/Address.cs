@@ -10,12 +10,12 @@
         public bool Active { get; set; }
 
         public int CityId { get; set; }
-        public City City { get; set; }
+        public virtual City? City { get; set; }
 
         public int AddressTypeId { get; set; }
-        public AddressType AddressType { get; set; }
+        public virtual AddressType? AddressType { get; set; }
 
-        public ICollection<HospitalAddress> Hospitals { get; set; }
-        public ICollection<PersonAddress> People { get; set; }
+        public virtual ICollection<HospitalAddress>? Hospitals { get; set; }
+        public virtual ICollection<PersonAddress>? People { get; set; }
     }
 }

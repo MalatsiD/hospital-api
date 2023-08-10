@@ -4,6 +4,8 @@ using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
 using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
+using Hospital_API.ViewModels.CountryViews;
+using Hospital_API.ViewModels.HospitalViews;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Net;

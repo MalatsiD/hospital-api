@@ -1,5 +1,7 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
+using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -19,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddTitle(TitleDto titleDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkTitle = CheckTitleNameExist(titleDto.Name!);
 
             if(!checkTitle.Result.IsSuccessful)
@@ -41,13 +39,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdateTitle(int id, TitleDto titleDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkTitle = CheckTitleNameExist(titleDto.Name!, id);
 
             if (!checkTitle.Result.IsSuccessful)
@@ -63,11 +57,53 @@ namespace Hospital_API.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPut("ChangeTitleStatus/{id}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
+        public async Task<IActionResult> UpdateTitleStatus(int id, StatusChangeDto statusChangeDto)
+        {
+            var request = new UpdateTitleStatusRequest();
+            request.Id = id;
+            request.StatusChangeDto = statusChangeDto;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteTitle(int id)
+        {
+
+            var checkTitleInPersonExistRequest = new CheckTitleInPersonExistRequest();
+            checkTitleInPersonExistRequest.TitleId = id;
+            var checkTitleResult = await _mediator.Send(checkTitleInPersonExistRequest);
+
+            if (!checkTitleResult.IsSuccessful)
+            {
+                return StatusCode(checkTitleResult.StatusCode, checkTitleResult);
+            }
+
+            var request = new DeleteTitleRequest();
+            request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpGet("{id}")]
         public async Task<IActionResult> GetSingleTitle(int id)
         {
             var request = new GetSingleTitleRequest();
             request.Id = id;
+            var result = await _mediator.Send(request);
+
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpGet("TitleList/{active}")]
+        public async Task<IActionResult> GetAllTitleList(bool active = true)
+        {
+            var request = new GetAllTitleListRequest();
+            request.Active = active;
             var result = await _mediator.Send(request);
 
             return StatusCode(result.StatusCode, result);

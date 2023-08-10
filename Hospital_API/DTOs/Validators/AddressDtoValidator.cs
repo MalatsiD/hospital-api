@@ -1,4 +1,6 @@
 ﻿using FluentValidation;
+using Hospital_API.DTOs.Address;
+using Hospital_API.Enums;
 
 namespace Hospital_API.DTOs.Validators
 {

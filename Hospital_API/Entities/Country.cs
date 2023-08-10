@@ -10,6 +10,6 @@
         public DateTime DateCreated { get; set; }
         public bool Active { get; set; }
 
-        public virtual ICollection<Province> Provinces { get; set; }
+        public virtual ICollection<Province>? Provinces { get; set; }
     }
 }

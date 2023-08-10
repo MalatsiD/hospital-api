@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs.Employee;
 using Hospital_API.DTOs.Patient;
 using Hospital_API.ViewModels;
@@ -20,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost("PatientPersonalInfo")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddPatientPersonalInfo(PatientPersonalInfoDto patientPersonalInfoDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var validate = ValidatePatientPersonalInfo(patientPersonalInfoDto);
 
             if (!validate.Result.IsSuccessful)
@@ -42,13 +39,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("PatientPersonalInfo/{personId}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdatePatientPersonalInfo(int personId, PatientPersonalInfoDto patientPersonalInfoDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var validate = ValidatePatientPersonalInfo(patientPersonalInfoDto);
 
             if (!validate.Result.IsSuccessful)
@@ -65,13 +58,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost("PatientAdmit/{patientId}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddPatientAdmit(int patientId, PatientAdmitDto patientAdmitDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new AddPatientAdmitRequest();
             request.PatientId = patientId;
             request.PatientAdmitDto = patientAdmitDto;
@@ -81,13 +70,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("PatientAdmit/{patientId}/{patientAdmitId}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdatePatientAdmit(int patientId, int patientAdmitId, PatientAdmitDto patientAdmitDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new UpdatePatientAdmitRequest();
             request.PatientAdmitId = patientAdmitId;
             request.PatientId = patientId;
@@ -98,13 +83,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost("PatientTransfer/{patientAdmitId}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddPatientTransfer(int patientAdmitId, PatientTranferDto patientTranferDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var request = new AddPatientTransferRequest();
             request.PatientAdmitId = patientAdmitId;
             request.PatientTranferDto = patientTranferDto;

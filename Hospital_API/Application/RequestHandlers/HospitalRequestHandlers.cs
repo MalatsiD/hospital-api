@@ -2,7 +2,9 @@
 using Hospital_API.Application.Requests;
 using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
+using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
+using Hospital_API.ViewModels.HospitalViews;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.ObjectModel;
@@ -120,7 +122,7 @@ namespace Hospital_API.Application.RequestHandlers
 
                     if (addr != null)
                     {
-                        addr.Address.AddressDetail = address.AddressDetail;
+                        addr.Address!.AddressDetail = address.AddressDetail;
                         addr.Address.ZipCode = address.ZipCode;
                         addr.Address.CityId = address.CityId;
                         addr.Address.AddressTypeId = address.AddressTypeId;
@@ -159,6 +161,88 @@ namespace Hospital_API.Application.RequestHandlers
             result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Hospital, HospitalView>(hospital);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class UpdateHospitalStatusRequestHandler : IRequestHandler<UpdateHospitalStatusRequest, ResponseModelView>
+    {
+        private readonly IHospitalRepository _repository;
+        private readonly IMapper _mapper;
+
+        public UpdateHospitalStatusRequestHandler(IHospitalRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(UpdateHospitalStatusRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var hospital = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (hospital == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Hospital not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            hospital.DateModified = DateTime.Now;
+            hospital.Active = request.StatusChangeDto?.Active ?? hospital.Active;
+
+            _repository.Update(hospital);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<Hospital, HospitalView>(hospital);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class DeleteHospitalRequestHandler : IRequestHandler<DeleteHospitalRequest, ResponseModelView>
+    {
+        private readonly IHospitalRepository _repository;
+        private readonly IMapper _mapper;
+
+        public DeleteHospitalRequestHandler(IHospitalRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(DeleteHospitalRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var hospital = _repository.FindBy(x => x.Id == request.Id)
+                .Include(x => x.Addresses!)
+                .ThenInclude(x => x.Address)
+                .FirstOrDefault();
+
+            if (hospital == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Hospital not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            var res = _repository.Delete(hospital);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = res;
 
             return Task.FromResult(result);
         }
@@ -310,11 +394,11 @@ namespace Hospital_API.Application.RequestHandlers
             var hospital = _repository.FindBy(x => x.Id == request.Id)
                 .Include(x => x.Addresses!)
                 .ThenInclude(x => x.Address)
-                .ThenInclude(x => x.AddressType)
+                .ThenInclude(x => x!.AddressType)
                 .Include(x => x.Addresses!)
                 .ThenInclude(x => x.Address)
-                .ThenInclude(x => x.City)
-                .ThenInclude(x => x.Province)
+                .ThenInclude(x => x!.City)
+                .ThenInclude(x => x!.Province)
                 .ThenInclude(x => x!.Country)
                 .AsNoTracking().FirstOrDefault();
                 
@@ -337,34 +421,24 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
-    public class GetAllHospitalRequestHandler : IRequestHandler<GetAllHospitalRequest, ResponseModelView>
+    public class GetAllHospitalListRequestHandler : IRequestHandler<GetAllHospitalListRequest, ResponseModelView>
     {
         private readonly IHospitalRepository _repository;
         private readonly IMapper _mapper;
 
-        public GetAllHospitalRequestHandler(IHospitalRepository repository, IMapper mapper)
+        public GetAllHospitalListRequestHandler(IHospitalRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
 
-        public Task<ResponseModelView> Handle(GetAllHospitalRequest request, CancellationToken cancellationToken)
+        public Task<ResponseModelView> Handle(GetAllHospitalListRequest request, CancellationToken cancellationToken)
         {
             var result = new ResponseModelView();
 
-            var hospitalsList = _repository.GetAll()
-                .Include(x => x.Addresses!)
-                .ThenInclude(x => x.Address)
-                .ThenInclude(x => x.AddressType)
-                .Include(x => x.Addresses!)
-                .ThenInclude(x => x.Address)
-                .ThenInclude(x => x.City)
-                .ThenInclude(x => x.Province)
-                .ThenInclude(x => x!.Country)
-                .AsNoTracking().ToList();
+            var hospitals = _repository.FindBy(x => x.Active == request.Active).AsNoTracking().ToList();
 
-
-            if (hospitalsList == null)
+            if (!hospitals.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Hospitals not found!";
@@ -376,7 +450,85 @@ namespace Hospital_API.Application.RequestHandlers
             result.StatusCode = StatusCodes.Status200OK;
             result.IsSuccessful = true;
             result.ErrorMessage = null;
-            result.Response = _mapper.Map<IEnumerable<Hospital>, IEnumerable<HospitalView>>(hospitalsList);
+            result.Response = _mapper.Map<IEnumerable<Hospital>, IEnumerable<HospitalListView>>(hospitals);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class GetAllHospitalRequestHandler : IRequestHandler<GetAllHospitalRequest, ResponsePaginationModelView>
+    {
+        private readonly IHospitalRepository _repository;
+        private readonly IMapper _mapper;
+
+        public GetAllHospitalRequestHandler(IHospitalRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponsePaginationModelView> Handle(GetAllHospitalRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponsePaginationModelView();
+
+            var predicate = PredicateBuilder.True<Hospital>();
+
+            List<Hospital>? hospitalResult = new List<Hospital>();
+
+            var hospitals = _repository.GetAll()
+                .Include(x => x.Addresses!)
+                .ThenInclude(x => x.Address)
+                .ThenInclude(x => x!.AddressType)
+                .Include(x => x.Addresses!)
+                .ThenInclude(x => x.Address)
+                .ThenInclude(x => x!.City)
+                .ThenInclude(x => x!.Province)
+                .ThenInclude(x => x!.Country)
+                .AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(request.HospitalFilterDto!.Name))
+            {
+                predicate = predicate.And(x => x.Name!.Contains(request.HospitalFilterDto.Name))
+                    .Or(x => x.Name!.Contains(request.HospitalFilterDto.Name));
+            }
+            if (!string.IsNullOrWhiteSpace(request.HospitalFilterDto.RegistrationNumber))
+            {
+                predicate = predicate.Or(x => x.RegistrationNumber!.Contains(request.HospitalFilterDto.RegistrationNumber));
+            }
+
+            hospitals = hospitals.Where(predicate);
+
+            if (request.HospitalFilterDto.CurrentPage > 0 && request.HospitalFilterDto.PageSize > 0)
+            {
+                var pagedResult = hospitals.GetPaged(request.HospitalFilterDto.CurrentPage,
+                    request.HospitalFilterDto.PageSize);
+
+                hospitalResult = pagedResult.Results as List<Hospital>;
+                result.CurrentPage = pagedResult.CurrentPage;
+                result.PageSize = pagedResult.PageSize;
+                result.TotalRecords = pagedResult.RowCount;
+                result.TotalPages = pagedResult.PageCount;
+
+            }
+            else
+            {
+                hospitalResult = hospitals.ToList();
+            }
+
+
+            if (hospitalResult == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Hospitals not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<IEnumerable<Hospital>, IEnumerable<HospitalView>>(hospitalResult);
 
             return Task.FromResult(result);
         }

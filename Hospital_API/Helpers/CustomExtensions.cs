@@ -1,6 +1,7 @@
 ﻿using static System.Net.Mime.MediaTypeNames;
 using System.Text.RegularExpressions;
 using Hospital_API.Helpers.Pagination;
+using Hospital_API.Middlewares;
 
 namespace Hospital_API.Helpers
 {
@@ -33,5 +34,11 @@ namespace Hospital_API.Helpers
 
             return result;
         }
+
+        public static void ConfigureExceptionMiddleware(this IApplicationBuilder app)
+        {
+            app.UseMiddleware<ExceptionMiddleware>();
+        }
+
     }
 }

@@ -2,7 +2,9 @@
 using Hospital_API.Application.Requests;
 using Hospital_API.Data.Abstract;
 using Hospital_API.Entities;
+using Hospital_API.Helpers;
 using Hospital_API.ViewModels;
+using Hospital_API.ViewModels.CountryViews;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -84,6 +86,85 @@ namespace Hospital_API.Application.RequestHandlers
             result.IsSuccessful = true;
             result.ErrorMessage = null;
             result.Response = _mapper.Map<Role, RoleView>(role);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class UpdateRoleStatusRequestHandler : IRequestHandler<UpdateRoleStatusRequest, ResponseModelView>
+    {
+        private readonly IRoleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public UpdateRoleStatusRequestHandler(IRoleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(UpdateRoleStatusRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var role = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (role == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Role not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            role.DateModified = DateTime.Now;
+            role.Active = request.StatusChangeDto?.Active ?? role.Active;
+
+            _repository.Update(role);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<Role, RoleView>(role);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class DeleteRoleRequestHandler : IRequestHandler<DeleteRoleRequest, ResponseModelView>
+    {
+        private readonly IRoleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public DeleteRoleRequestHandler(IRoleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(DeleteRoleRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var role = _repository.FindBy(x => x.Id == request.Id).FirstOrDefault();
+
+            if (role == null)
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Role not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            var res = _repository.Delete(role);
+            _repository.Commit();
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = res;
 
             return Task.FromResult(result);
         }
@@ -203,24 +284,24 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
-    public class GetAllRoleRequestHandler : IRequestHandler<GetAllRoleRequest, ResponseModelView>
+    public class GetAllRoleListRequestHandler : IRequestHandler<GetAllRoleListRequest, ResponseModelView>
     {
         private readonly IRoleRepository _repository;
         private readonly IMapper _mapper;
 
-        public GetAllRoleRequestHandler(IRoleRepository repository, IMapper mapper)
+        public GetAllRoleListRequestHandler(IRoleRepository repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
         }
 
-        public Task<ResponseModelView> Handle(GetAllRoleRequest request, CancellationToken cancellationToken)
+        public Task<ResponseModelView> Handle(GetAllRoleListRequest request, CancellationToken cancellationToken)
         {
             var result = new ResponseModelView();
 
-            var rolesList = _repository.GetAll().AsNoTracking().ToList();
+            var roles = _repository.FindBy(x => x.Active == request.Active).AsNoTracking().ToList();
 
-            if (!rolesList.Any())
+            if (!roles.Any())
             {
                 result.StatusCode = StatusCodes.Status404NotFound;
                 result.ErrorMessage = "Roles not found!";
@@ -232,7 +313,71 @@ namespace Hospital_API.Application.RequestHandlers
             result.StatusCode = StatusCodes.Status200OK;
             result.IsSuccessful = true;
             result.ErrorMessage = null;
-            result.Response = _mapper.Map<IEnumerable<Role>, IEnumerable<RoleView>>(rolesList);
+            result.Response = _mapper.Map<IEnumerable<Role>, IEnumerable<RoleView>>(roles);
+
+            return Task.FromResult(result);
+        }
+    }
+
+    public class GetAllRoleRequestHandler : IRequestHandler<GetAllRoleRequest, ResponsePaginationModelView>
+    {
+        private readonly IRoleRepository _repository;
+        private readonly IMapper _mapper;
+
+        public GetAllRoleRequestHandler(IRoleRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponsePaginationModelView> Handle(GetAllRoleRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponsePaginationModelView();
+
+            var predicate = PredicateBuilder.True<Role>();
+
+            List<Role>? roleResult = new List<Role>();
+
+            var roles = _repository.GetAll().AsNoTracking();
+
+            if (!string.IsNullOrWhiteSpace(request.RoleFilterDto!.Name))
+            {
+                predicate = predicate.And(x => x.Name!.Contains(request.RoleFilterDto.Name))
+                    .Or(x => x.Description!.Contains(request.RoleFilterDto.Name));
+            }
+
+            roles = roles.Where(predicate);
+
+            if (request.RoleFilterDto.CurrentPage > 0 && request.RoleFilterDto.PageSize > 0)
+            {
+                var pagedResult = roles.GetPaged(request.RoleFilterDto.CurrentPage,
+                    request.RoleFilterDto.PageSize);
+
+                roleResult = pagedResult.Results as List<Role>;
+                result.CurrentPage = pagedResult.CurrentPage;
+                result.PageSize = pagedResult.PageSize;
+                result.TotalRecords = pagedResult.RowCount;
+                result.TotalPages = pagedResult.PageCount;
+
+            }
+            else
+            {
+                roleResult = roles.ToList();
+            }
+
+            if (!roleResult!.Any())
+            {
+                result.StatusCode = StatusCodes.Status404NotFound;
+                result.ErrorMessage = "Roles not found!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = _mapper.Map<IEnumerable<Role>, IEnumerable<RoleView>>(roleResult!);
 
             return Task.FromResult(result);
         }

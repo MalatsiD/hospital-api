@@ -1,4 +1,5 @@
-﻿using Hospital_API.Application.Requests;
+﻿using Hospital_API.ActionFilters;
+using Hospital_API.Application.Requests;
 using Hospital_API.DTOs;
 using Hospital_API.DTOs.Employee;
 using Hospital_API.ViewModels;
@@ -20,13 +21,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost("PersonalInfo")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddPersonalInfo(PersonalInfoDto personalInfoDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var checkEmial = CheckEmployeeEmailExist(personalInfoDto.Email!);
 
             if(checkEmial.Result.IsSuccessful)
@@ -49,13 +46,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPost("EmployementInfo/{employeeId}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> AddEmployementInfo(int employeeId, EmploymentInfoDto employmentInfoDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var validate = ValidateEmploymentInfo(employmentInfoDto);
 
             if (!validate.Result.IsSuccessful)
@@ -72,13 +65,9 @@ namespace Hospital_API.Controllers
         }
 
         [HttpPut("PersonalInfo/{personId}")]
+        [ServiceFilter(typeof(ValidationFilterAttribute))]
         public async Task<IActionResult> UpdatePersonalInfo(int personId, PersonalInfoDto personalInfoDto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
             var validate = ValidateEmployeePersonalInfo(personalInfoDto);
 
             if (!validate.Result.IsSuccessful)

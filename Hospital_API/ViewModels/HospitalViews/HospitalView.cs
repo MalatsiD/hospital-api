@@ -1,6 +1,6 @@
 ﻿using Newtonsoft.Json;
 
-namespace Hospital_API.ViewModels
+namespace Hospital_API.ViewModels.HospitalViews
 {
     public class HospitalView
     {
@@ -11,7 +11,7 @@ namespace Hospital_API.ViewModels
         public string? Name { get; set; }
 
         [JsonProperty("phoneNumber")]
-        public long PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         [JsonProperty("email")]
         public string? Email { get; set; }

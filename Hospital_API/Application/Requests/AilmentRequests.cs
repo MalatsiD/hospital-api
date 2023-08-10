@@ -1,4 +1,5 @@
 ﻿using Hospital_API.DTOs;
+using Hospital_API.DTOs.Filters;
 using Hospital_API.ViewModels;
 using MediatR;
 
@@ -13,6 +14,17 @@ namespace Hospital_API.Application.Requests
     {
         public int Id { get; set; }
         public AilmentDto? AilmentDto { get; set; }
+    }
+
+    public class UpdateAilmentStatusRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
+        public StatusChangeDto? StatusChangeDto { get; set; }
+    }
+
+    public class DeleteAilmentRequest : IRequest<ResponseModelView>
+    {
+        public int Id { get; set; }
     }
 
     public class CheckAilmentNameExistRequest : IRequest<ResponseModelView>
@@ -31,8 +43,13 @@ namespace Hospital_API.Application.Requests
         public int Id { get; set; }
     }
 
-    public class GetAllAilmentRequest : IRequest<ResponseModelView>
+    public class GetAllAilmentListRequest : IRequest<ResponseModelView>
     {
-        public bool? Active { get; set; }
+        public bool? Active { get; set; } = true;
+    }
+
+    public class GetAllAilmentRequest : IRequest<ResponsePaginationModelView>
+    {
+        public AilmentFilterDto? ailmentFilterDto { get; set; }
     }
 }

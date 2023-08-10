@@ -109,6 +109,41 @@ namespace Hospital_API.Application.RequestHandlers
         }
     }
 
+    public class CheckHospitalInDepartmentExistRequestHandler : IRequestHandler<CheckHospitalInDepartmentExistRequest, ResponseModelView>
+    {
+        private readonly IDepartmentRepository _repository;
+        private readonly IMapper _mapper;
+
+        public CheckHospitalInDepartmentExistRequestHandler(IDepartmentRepository repository, IMapper mapper)
+        {
+            _repository = repository;
+            _mapper = mapper;
+        }
+
+        public Task<ResponseModelView> Handle(CheckHospitalInDepartmentExistRequest request, CancellationToken cancellationToken)
+        {
+            var result = new ResponseModelView();
+
+            var hospitalExist = _repository.FindBy(x => x.HospitalId == request.HospitalId).AsNoTracking().Any();
+
+            if (hospitalExist)
+            {
+                result.StatusCode = StatusCodes.Status200OK;
+                result.ErrorMessage = "Hospital cannot be deleted!";
+                result.IsSuccessful = false;
+
+                return Task.FromResult(result);
+            }
+
+            result.StatusCode = StatusCodes.Status200OK;
+            result.IsSuccessful = true;
+            result.ErrorMessage = null;
+            result.Response = hospitalExist;
+
+            return Task.FromResult(result);
+        }
+    }
+
     public class CheckDepartmentExistRequestHandler : IRequestHandler<CheckDepartmentExistRequest, ResponseModelView>
     {
         private readonly IDepartmentRepository _repository;

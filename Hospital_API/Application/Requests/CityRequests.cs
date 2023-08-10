@@ -44,6 +44,12 @@ namespace Hospital_API.Application.Requests
         public int Id { get; set; }
     }
 
+    public class GetCityListRequest : IRequest<ResponseModelView>
+    {
+        public int ProvinceId { get; set; }
+        public bool Active { get; set; }
+    }
+
     public class GetSingleCityRequest : IRequest<ResponseModelView>
     {
         public int Id { get; set; }

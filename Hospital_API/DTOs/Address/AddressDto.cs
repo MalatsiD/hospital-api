@@ -2,12 +2,13 @@
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
-namespace Hospital_API.DTOs
+namespace Hospital_API.DTOs.Address
 {
     public class AddressDto : IValidatableObject
     {
         [JsonProperty("id")]
         public int Id { get; set; }
+
         [JsonProperty("addressDetail")]
         public string? AddressDetail { get; set; } //street Address/PO BOX/ Private Bag
 
